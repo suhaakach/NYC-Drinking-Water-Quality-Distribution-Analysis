@@ -1,1 +1,1 @@
-STAT 4188 PROJECT BY SUHA AKACH.
+STAT 4188 Project by Isabelle Pérez and Suha Akach.
