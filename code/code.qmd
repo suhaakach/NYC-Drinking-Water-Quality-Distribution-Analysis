@@ -1,0 +1,50 @@
+---
+title: "Final Project"
+author: "Suha Akach & Isabelle Perez"
+toc: true
+number-sections: true
+highlight-style: pygments
+format: 
+  html: 
+    code-fold: true
+    html-math-method: katex
+  pdf: 
+    geometry: 
+      - top=30mm
+      - left=20mm
+  docx: default
+---
+
+# Import Data & Necessary Packages
+
+```{python}
+import pandas as pd
+import numpy as np
+```
+
+```{python}
+data = pd.read_csv('../data/Drinking_Water_Quality_Distribution_Monitoring_Data_20241116.csv',
+                                                                                low_memory = False)
+```
+
+# Data Cleaning 
+
+```{python}
+# ensure sample time column is clean
+data.dropna(subset = ['Sample Time'], inplace = True)
+
+# standardize format of sample time
+data['Sample Time'] = data['Sample Time'].apply(lambda x: x[11:16] if len(x) > 5 else x)
+
+# change to datetime format
+data['Sample Date'] = pd.to_datetime(data['Sample Date'] + ' ' + data['Sample Time'])
+```
+
+```{python}
+# drop unecessary columns and rows
+data.drop(columns = ['Sample Number', 'Fluoride (mg/L)', 'Sample Time'], inplace = True)
+```
+
+```{python}
+data.isnull().sum()
+```
