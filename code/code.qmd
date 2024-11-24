@@ -38,6 +38,9 @@ data['Sample Time'] = data['Sample Time'].apply(lambda x: x[11:16] if len(x) > 5
 
 # change to datetime format
 data['Sample Date'] = pd.to_datetime(data['Sample Date'] + ' ' + data['Sample Time'])
+
+data.loc[data['Turbidity (NTU)'] == '<0.10', 'Turbidity (NTU)'] = '0.10'
+data['Turbidity (NTU)'] = data['Turbidity (NTU)'].apply(lambda x: float(x))
 ```
 
 ```{python}
@@ -45,6 +48,8 @@ data['Sample Date'] = pd.to_datetime(data['Sample Date'] + ' ' + data['Sample Ti
 data.drop(columns = ['Sample Number', 'Fluoride (mg/L)', 'Sample Time'], inplace = True)
 ```
 
+## Imputation
+
 ```{python}
-data.isnull().sum()
+data['Turbidity (NTU)'].unique()
 ```
