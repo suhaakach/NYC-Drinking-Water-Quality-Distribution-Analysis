@@ -24,8 +24,7 @@ import numpy as np
 
 ```{python}
 data = pd.read_csv('../data/Drinking_Water_Quality_Distribution_Monitoring_Data_20241116.csv',
-                                                                                low_memory = False)
-samp_sites = pd.read_csv('../data/sampling_sites.csv')
+                                                                  low_memory = False)                       
 ```
 
 # Data Cleaning 
@@ -36,10 +35,6 @@ data.rename(columns = {'Sample Date': 'sample_date', 'Sample Site': 'sample_site
               'Sample class': 'sample_class', 'Residual Free Chlorine (mg/L)': 'chlorine',
               'Turbidity (NTU)': 'turbidity', 'Coliform (Quanti-Tray) (MPN /100mL)': 'coliform',
                                       'E.coli(Quanti-Tray) (MPN/100mL)': 'ecoli'}, inplace = True)
-
-samp_sites.rename(columns = {'Sample Site': 'sample_site', 'X - Coordinate': 'x_coord',
-                                            'Y - Coordinate': 'y_coord'}, inplace = True)
-samp_sites.drop(columns = ['\n'], inplace = True)
 ```
 
 ```{python}
