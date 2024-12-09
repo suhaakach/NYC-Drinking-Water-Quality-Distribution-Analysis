@@ -106,17 +106,19 @@ data.head()
 
 ```{python}
 def check_stationarity(series):
+    '''Check stationarity of column using Augmented Dickey-Fuller test'''
     result = adfuller(series)
     print(f'ADF Statistic: {result[0]}')
     print(f'p-value: {result[1]}')
     if result[1] <= 0.05:
-        print("The series is stationary.")
+        print('The series is stationary.')
         print()
     else:
-        print("The series is not stationary.")
+        print('The series is not stationary.')
         print()
 
+# check stationarities
 for col in ['chlorine', 'turbidity', 'coliform', 'ecoli']:
-    print(f"Checking stationarity for {col}")
+    print(f'Checking stationarity for {col}')
     check_stationarity(data[col])
 ```
