@@ -92,7 +92,7 @@ sites.rename(columns = {'Sample Site': 'sample_site'}, inplace = True)
 data = pd.merge(data, sites, on = 'sample_site')
 
 data = data.drop(columns = ['OBJECTID', 'Sample Station (SS) - Location Description', 
-                                'X - Coordinate', 'Y - Coordinate', 'City or Placename'])
+                            'X - Coordinate', 'Y - Coordinate', 'City or Placename', 'ZIP Code'])
 ```
 
 ```{python}
@@ -121,4 +121,32 @@ def check_stationarity(series):
 for col in ['chlorine', 'turbidity', 'coliform', 'ecoli']:
     print(f'Checking stationarity for {col}')
     check_stationarity(data[col])
+```
+
+```{python}
+# sort data 
+data = data.set_index('sample_date')
+data = data.sort_values(by = 'sample_date')
+
+# encode non-numeric columns
+data['sample_class'] = data['sample_class'].apply(lambda x: 1 if x == 'Compliance' else 0)
+data = data.drop(columns = ['sample_site'])
+
+# split into training and testing
+train_size = int(len(data) * 0.7)
+
+data_train = data[:train_size]
+data_test = data[train_size:]
+```
+
+```{python}
+model = VAR(data_train)
+
+results = model.fit(maxlags = 2)
+```
+
+```{python}
+results.summary()
+
+results.params
 ```
