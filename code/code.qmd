@@ -63,7 +63,43 @@ data.drop(columns = ['Sample Number', 'Fluoride (mg/L)', 'Sample Time'], inplace
 ```
 
 ```{python}
-data = pd.merge(data, samp_sites, on = 'sample_site')
+# impute non-float values
+catval = {'<0.10': float(0.09), '<1': float(0.99), '>200.5': float(200.6)}
+data = data.replace(catval)
 
-data
+# change data types to float
+data['chlorine'] = data['chlorine'].astype(float)
+data['coliform'] = data['coliform'].astype(float)
+data['ecoli'] = data['ecoli'].astype(float)
 ```
+
+```{python}
+# check to make sure all values are possible
+data = data[data['chlorine'] > 0]
+data = data[data['coliform'] > 0]
+data = data[data['ecoli'] > 0]
+```
+
+```{python}
+# only 4 missing values total - drop
+data = data.dropna()
+
+data.shape
+```
+
+```{python}
+# merge with location based information
+sites = pd.read_csv('../data/sampling_sites_extended.csv')
+sites.rename(columns = {'Sample Site': 'sample_site'}, inplace = True)
+
+data = pd.merge(data, sites, on = 'sample_site')
+
+data = data.drop(columns = ['OBJECTID', 'Sample Station (SS) - Location Description', 
+                                'X - Coordinate', 'Y - Coordinate', 'City or Placename'])
+```
+
+```{python}
+data.head()
+```
+
+## Modelling
