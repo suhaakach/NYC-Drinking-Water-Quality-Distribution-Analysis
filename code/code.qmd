@@ -186,9 +186,9 @@ for i in range(1, 31):
     }
 
 # find best lag by metric
-best_aic = min(lag_results, key=lambda x: lag_results[x]['AIC'])
-best_bic = min(lag_results, key=lambda x: lag_results[x]['BIC'])
-best_hqic = min(lag_results, key=lambda x: lag_results[x]['HQIC'])
+best_aic = min(lag_results, key = lambda x: lag_results[x]['AIC'])
+best_bic = min(lag_results, key = lambda x: lag_results[x]['BIC'])
+best_hqic = min(lag_results, key = lambda x: lag_results[x]['HQIC'])
 
 print(f'Best lag by AIC: {best_aic}')
 print(f'Best lag by BIC: {best_bic}')
@@ -197,9 +197,9 @@ print(f'Best lag by HQIC: {best_hqic}')
 
 ```{python}
 lags = list(lag_results.keys())
-aic_values = [lag_results[lag]["AIC"] for lag in lags]
-bic_values = [lag_results[lag]["BIC"] for lag in lags]
-hqic_values = [lag_results[lag]["HQIC"] for lag in lags]
+aic_values = [lag_results[lag]['AIC'] for lag in lags]
+bic_values = [lag_results[lag]['BIC'] for lag in lags]
+hqic_values = [lag_results[lag]['HQIC'] for lag in lags]
 
 # plot AIC, BIC, and HQIC for range of lags
 plt.plot(lags, aic_values, label='AIC', marker='o')
@@ -227,8 +227,8 @@ forecast_df = pd.DataFrame(forecast, index = data_test.index,
 mae = mean_absolute_error(data_test, forecast_df)
 rmse = mean_squared_error(data_test, forecast_df, squared = False)
 
-print(f"Out-of-Sample MAE: {mae}")
-print(f"Out-of-Sample RMSE: {rmse}")
+print(f'MAE: {mae}')
+print(f'RMSE: {rmse}')
 ```
 
 ```{python}
@@ -240,7 +240,13 @@ for col in data_test.columns:
 ```
 
 ```{python}
+<<<<<<< HEAD
 forecast_df
 #data_test
 ```
 
+=======
+#print(results.test_serial_correlation())
+print(results.summary())
+```
+>>>>>>> 50fe6aa5e0cc5f03c847449bde501b3cc64faa88
