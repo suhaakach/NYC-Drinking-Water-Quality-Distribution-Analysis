@@ -119,12 +119,10 @@ sites = sites.drop_duplicates()
 sites.rename(columns = {'Sample Site': 'sample_site'}, inplace = True)
 
 data = pd.merge(data, sites, on = 'sample_site')
-
-data
 ```
 
 ```{python}
-'''dates = data['sample_date']
+dates = data['sample_date']
 
 # prepare for modelling
 data = data.drop(columns = ['OBJECTID', 'sample_class', 
@@ -134,7 +132,7 @@ data = data.drop(columns = ['OBJECTID', 'sample_class',
 
 # scale data
 scaler = StandardScaler()
-data = pd.DataFrame(scaler.fit_transform(data), columns = data.columns)'''
+data = pd.DataFrame(scaler.fit_transform(data), columns = data.columns)
 
 # sort data 
 data['sample_date'] = dates
@@ -144,11 +142,7 @@ data = data.sort_values(by = 'sample_date', ascending = True)
 
 ## Borough information
 
-```{python}
 
-
-
-```
 
 # Modelling
 
