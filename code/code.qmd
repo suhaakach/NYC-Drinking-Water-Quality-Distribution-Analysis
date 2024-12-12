@@ -23,7 +23,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import adfuller
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+                                                            r2_score)
+from uszipcode import SearchEngine
 ```
 
 ```{python}
@@ -87,18 +89,50 @@ data.shape
 ```
 
 ```{python}
-# merge with location based information
+# read in data for sampling sites
 sites = pd.read_csv('../data/sampling_sites_extended.csv')
+
+# use search engine to find demographic data
+search = SearchEngine() 
+
+zipdata = [] 
+
+for zipcode in sites['ZIP Code']: 
+  info = search.by_zipcode(zipcode)
+
+  if bool(info) == True: 
+    zipdata.append({
+      'ZIP Code': zipcode,
+      'housing_units': info.housing_units / 1000,
+      'occupied_housing_units': info.occupied_housing_units / 1000, 
+      'median_home_value': info.median_home_value / 1000,
+      'median_household_income': info.median_household_income / 1000
+    })
+
+# add demographic data to sampling sites
+zipdata = pd.DataFrame(zipdata) 
+sites = pd.merge(sites, zipdata, how = 'inner', on = 'ZIP Code')
+sites = sites.drop_duplicates()
+
+# merge with location based information
 sites.rename(columns = {'Sample Site': 'sample_site'}, inplace = True)
 
 data = pd.merge(data, sites, on = 'sample_site')
-
-data = data.drop(columns = ['OBJECTID', 'Sample Station (SS) - Location Description', 
-                            'X - Coordinate', 'Y - Coordinate', 'City or Placename', 'ZIP Code'])
 ```
 
 ```{python}
-data.head()
+# sort data 
+data = data.set_index('sample_date')
+data = data.sort_values(by = 'sample_date')
+
+# prepare for modelling
+data = data.drop(columns = ['OBJECTID', 'sample_site', 'sample_class', 
+                            'Sample Station (SS) - Location Description',
+                            'X - Coordinate', 'Y - Coordinate', 'LONGITUDE',
+                            'LATITUDE', 'City or Placename', 'ZIP Code'])
+
+# scale data
+data = (data - data.mean()) / data.std()
 ```
 
 # Visualizations
@@ -126,14 +160,6 @@ for col in ['chlorine', 'turbidity', 'coliform', 'ecoli']:
 ```
 
 ```{python}
-# sort data 
-data = data.set_index('sample_date')
-data = data.sort_values(by = 'sample_date')
-
-# encode non-numeric columns
-data['sample_class'] = data['sample_class'].apply(lambda x: 1 if x == 'Compliance' else 0)
-data = data.drop(columns = ['sample_site'])
-
 # split into training and testing
 train_size = int(len(data) * 0.7)
 
@@ -186,7 +212,7 @@ plt.show()
 
 ```{python}
 # fit model
-results = model.fit(maxlags = 15)
+results = model.fit(maxlags = 27)
 
 # create predictions
 forecast_input = data_train.values[-results.k_ar:]
@@ -197,27 +223,21 @@ forecast_df = pd.DataFrame(forecast, index = data_test.index,
 
 ```{python}
 mae = mean_absolute_error(data_test, forecast_df)
-rmse = mean_squared_error(data_test, forecast_df, squared=False)
+rmse = mean_squared_error(data_test, forecast_df, squared = False)
 
 print(f"Out-of-Sample MAE: {mae}")
 print(f"Out-of-Sample RMSE: {rmse}")
 ```
 
 ```{python}
-fitted_vals = results.fittedvalues
-residuals = results.resid
+for col in data_test.columns:
+  actual = data_test[col]
+  pred = forecast_df[col]
 
-r_squared = {}
+  print(f'R-squared for {col} on test set: {r2_score(actual, pred):.4f}')
+```
 
-for col in data_train.columns:
-    actual = data_train[results.k_ar:][col]
-    predicted = fitted_vals[col]
-    
-    ssr = ((actual - predicted) ** 2).sum()
-    tss = ((actual - actual.mean()) ** 2).sum()
-    
-    r_squared[col] = 1 - (ssr / tss)
-
-for var, r2 in r_squared.items():
-    print(f"R-squared for {var}: {r2:.4f}")
+```{python}
+forecast_df
+#data_test
 ```
