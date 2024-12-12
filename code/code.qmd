@@ -26,6 +26,7 @@ from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                                                             r2_score)
 from uszipcode import SearchEngine
+from sklearn.preprocessing import StandardScaler
 ```
 
 ```{python}
@@ -121,22 +122,25 @@ data = pd.merge(data, sites, on = 'sample_site')
 ```
 
 ```{python}
-# sort data 
-data = data.set_index('sample_date')
-data = data.sort_values(by = 'sample_date')
+dates = data['sample_date']
 
 # prepare for modelling
 data = data.drop(columns = ['OBJECTID', 'sample_site', 'sample_class', 
                             'Sample Station (SS) - Location Description',
                             'X - Coordinate', 'Y - Coordinate', 'LONGITUDE',
-                            'LATITUDE', 'City or Placename', 'ZIP Code'])
+                            'LATITUDE', 'City or Placename', 'ZIP Code', 'sample_date'])
 
 # scale data
-data = (data - data.mean()) / data.std()
+scaler = StandardScaler()
+data = pd.DataFrame(scaler.fit_transform(data), columns = data.columns)
+
+# sort data 
+data['sample_date'] = dates
+data = data.set_index('sample_date')
+data = data.sort_values(by = 'sample_date', ascending = True)
 ```
 
 # Visualizations
-
 
 # Modelling
 
