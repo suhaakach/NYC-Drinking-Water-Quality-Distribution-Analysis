@@ -1,0 +1,15 @@
+---
+title: "2024 NYC - Drinking Water Quality Distribution"
+subtitle: "STAT 4188"
+author: Isabelle Perez & Suha Akach
+format:
+  revealjs:
+    slide-number: true
+    preview-links: true
+    theme: serif
+    transition: slide
+execute: 
+  cache: true    
+echo: true
+jupyter: python3
+---
