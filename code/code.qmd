@@ -23,6 +23,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.api import VAR, VARMAX
 from statsmodels.tsa.stattools import adfuller
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                                                             r2_score)
 from uszipcode import SearchEngine
@@ -118,25 +119,22 @@ sites = sites.drop_duplicates()
 sites.rename(columns = {'Sample Site': 'sample_site'}, inplace = True)
 
 data = pd.merge(data, sites, on = 'sample_site')
+
+data
 ```
 
 ```{python}
-dates = data['sample_date']
+'''dates = data['sample_date']
 
 # prepare for modelling
 data = data.drop(columns = ['OBJECTID', 'sample_class', 
                             'Sample Station (SS) - Location Description',
-<<<<<<< HEAD
                             'X - Coordinate', 'Y - Coordinate',
                             'City or Placename'])
-=======
-                            'X - Coordinate', 'Y - Coordinate', 'LONGITUDE',
-                            'LATITUDE', 'City or Placename', 'ZIP Code', 'sample_date'])
->>>>>>> bbc60bb253078e7170fc5ec3f857a3e4cb34bdbd
 
 # scale data
 scaler = StandardScaler()
-data = pd.DataFrame(scaler.fit_transform(data), columns = data.columns)
+data = pd.DataFrame(scaler.fit_transform(data), columns = data.columns)'''
 
 # sort data 
 data['sample_date'] = dates
@@ -244,9 +242,9 @@ bic_values = [lag_results[lag]['BIC'] for lag in lags]
 hqic_values = [lag_results[lag]['HQIC'] for lag in lags]
 
 # plot AIC, BIC, and HQIC for range of lags
-plt.plot(lags, aic_values, label='AIC', marker='o')
-plt.plot(lags, bic_values, label='BIC', marker='o')
-plt.plot(lags, hqic_values, label='HQIC', marker='o')
+plt.plot(lags, aic_values, label = 'AIC', marker = 'o')
+plt.plot(lags, bic_values, label = 'BIC', marker = 'o')
+plt.plot(lags, hqic_values, label = 'HQIC', marker = 'o')
 plt.xlabel('Lag Order')
 plt.ylabel('Information Criterion')
 plt.title('Lag Order Selection (Custom Range)')
