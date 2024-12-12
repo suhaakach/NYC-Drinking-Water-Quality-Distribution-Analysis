@@ -26,12 +26,15 @@ from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                                                             r2_score)
 from uszipcode import SearchEngine
+<<<<<<< HEAD
 import seaborn as sns
 from pysal.lib import weights
 from pysal.model import spreg
 import gmplot
 import warnings
 warnings.filterwarnings("ignore")
+=======
+>>>>>>> bbc60bb253078e7170fc5ec3f857a3e4cb34bdbd
 ```
 
 ```{python}
@@ -127,18 +130,27 @@ data = pd.merge(data, sites, on = 'sample_site')
 ```
 
 ```{python}
-# sort data 
-data = data.set_index('sample_date')
-data = data.sort_values(by = 'sample_date')
+dates = data['sample_date']
 
 # prepare for modelling
 data = data.drop(columns = ['OBJECTID', 'sample_class', 
                             'Sample Station (SS) - Location Description',
+<<<<<<< HEAD
                             'X - Coordinate', 'Y - Coordinate',
                             'City or Placename'])
+=======
+                            'X - Coordinate', 'Y - Coordinate', 'LONGITUDE',
+                            'LATITUDE', 'City or Placename', 'ZIP Code', 'sample_date'])
+>>>>>>> bbc60bb253078e7170fc5ec3f857a3e4cb34bdbd
 
 # scale data
-data = (data - data.mean()) / data.std()
+scaler = StandardScaler()
+data = pd.DataFrame(scaler.fit_transform(data), columns = data.columns)
+
+# sort data 
+data['sample_date'] = dates
+data = data.set_index('sample_date')
+data = data.sort_values(by = 'sample_date', ascending = True)
 ```
 
 ## Borough information
@@ -178,7 +190,6 @@ data.to_csv('../data/data_merged_with_borough.csv', index=False)
 
 
 ```
-
 
 # Modelling
 
@@ -283,7 +294,10 @@ for col in data_test.columns:
 forecast_df
 #data_test
 
+<<<<<<< HEAD
 
 #print(results.test_serial_correlation())
 print(results.summary())
 ```
+=======
+>>>>>>> bbc60bb253078e7170fc5ec3f857a3e4cb34bdbd
