@@ -26,6 +26,10 @@ from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                                                             r2_score)
 from uszipcode import SearchEngine
+import seaborn as sns
+from pysal.lib import weights
+from pysal.model import spreg
+import gmplot
 import warnings
 warnings.filterwarnings("ignore")
 ```
@@ -128,16 +132,52 @@ data = data.set_index('sample_date')
 data = data.sort_values(by = 'sample_date')
 
 # prepare for modelling
-data = data.drop(columns = ['OBJECTID', 'sample_site', 'sample_class', 
+data = data.drop(columns = ['OBJECTID', 'sample_class', 
                             'Sample Station (SS) - Location Description',
-                            'X - Coordinate', 'Y - Coordinate', 'LONGITUDE',
-                            'LATITUDE', 'City or Placename', 'ZIP Code'])
+                            'X - Coordinate', 'Y - Coordinate',
+                            'City or Placename'])
 
 # scale data
 data = (data - data.mean()) / data.std()
 ```
 
-# Visualizations
+## Borough information
+```{python}
+# save cleaned and merged data to new file
+data.to_csv('../data/data_merged.csv', index=False)
+
+# lowercase column names
+data.columns = data.columns.str.lower()
+
+# use uszipcode to find borough from longitude, latitude, and zip code
+search = SearchEngine()
+
+# function to get borough from longitude, latitude, and zip code
+def get_borough(row):
+    try:
+        # Use ZIP Code and coordinates to get borough information
+        info = search.by_coordinates(row['latitude'], row['longitude'], radius=5)
+        if info:
+            return info[0].major_city  # This returns the 'borough' or major city name (if available)
+        else:
+            return None  # If no info is found, return None
+    except Exception as e:
+        print(f"Error retrieving borough for row {row['sample_site']}: {e}")
+        return None
+
+# apply the function to each row of the data
+data['borough'] = data.apply(get_borough, axis=1)
+
+# save the final merged dataset to a new file
+data.to_csv('../data/data_merged_with_borough.csv', index=False)
+
+```
+
+```{python}
+
+
+
+```
 
 
 # Modelling
@@ -240,13 +280,10 @@ for col in data_test.columns:
 ```
 
 ```{python}
-<<<<<<< HEAD
 forecast_df
 #data_test
-```
 
-=======
+
 #print(results.test_serial_correlation())
 print(results.summary())
 ```
->>>>>>> 50fe6aa5e0cc5f03c847449bde501b3cc64faa88

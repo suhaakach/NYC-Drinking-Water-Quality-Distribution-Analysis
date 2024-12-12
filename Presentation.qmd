@@ -10,6 +10,119 @@ format:
     transition: slide
 execute: 
   cache: true    
-echo: true
+echo: false
 jupyter: python3
+bibliography: ref.bib
 ---
+
+# Objectives
+::: {.incremental}
+- Monitering water quality by different chemical presence over time.
+- Finding areas of concern for water quality in NYC.
+- Predicting future values and presence of different chemicals.
+:::
+
+# Data Collection
+::: {.incremental}
+- “Drinking Water Quality Distribution Monitoring Data” provided by the Department of Environmental Protection (DEP) [@nycopendata2024]. 
+- Data from: 09/01/2024 till 09/30/2024.
+- Tracked variables & chemicals: Chlorine, Turbidity, Fluoride, Coliform, E.coli.
+:::
+
+# Data Cleaning
+## {.scrollable}
+- Dropped and cleaned columns using Pandas.
+    - Unessasary columns: Sample Number, Fluoride (mg/L), Sample Time.
+- Improved column readibilty.
+- Strandized format of our sample time column.
+- Fixed column data types.
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.api import VAR
+from statsmodels.tsa.stattools import adfuller
+from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+                                                            r2_score)
+from uszipcode import SearchEngine
+import warnings
+warnings.filterwarnings("ignore")
+
+data = pd.read_csv('data/Drinking_Water_Quality_Distribution_Monitoring_Data_20241116.csv',
+                                                                  low_memory = False)                       
+
+# rename columns
+data.rename(columns = {'Sample Date': 'sample_date', 'Sample Site': 'sample_site', 
+              'Sample class': 'sample_class', 'Residual Free Chlorine (mg/L)': 'chlorine',
+              'Turbidity (NTU)': 'turbidity', 'Coliform (Quanti-Tray) (MPN /100mL)': 'coliform',
+                                      'E.coli(Quanti-Tray) (MPN/100mL)': 'ecoli'}, inplace = True)
+```
+```{python}
+#| echo : true
+# ensure sample time column is clean
+data.dropna(subset = ['Sample Time'], inplace = True)
+
+# standardize format of sample time
+data['Sample Time'] = data['Sample Time'].apply(lambda x: x[11:16] 
+    if len(x) > 5 else x)
+
+# change to datetime format
+data['sample_date'] = pd.to_datetime(data['sample_date'] + ' ' + 
+    data['Sample Time'])
+
+# change turbidity to float
+data.loc[data['turbidity'] == '<0.10', 'turbidity'] = '0.10'
+data['turbidity'] = data['turbidity'].apply(lambda x: float(x))
+```
+
+# Feature Engineering
+## {.scrollable}
+- Merged sample site information with our water quality dataset using USZIPCODE package.
+    - This helps us track different chemical values depending on borough, median household income, median_home_value, etc.
+
+```{python}
+#| echo : true
+# read in data for sampling sites
+sites = pd.read_csv('data/sampling_sites_extended.csv')
+
+# use search engine to find demographic data
+search = SearchEngine() 
+
+zipdata = [] 
+
+for zipcode in sites['ZIP Code']: 
+  info = search.by_zipcode(zipcode)
+
+  if bool(info) == True: 
+    zipdata.append({
+      'ZIP Code': zipcode,
+      'housing_units': info.housing_units / 1000,
+      'occupied_housing_units': info.occupied_housing_units / 1000, 
+      'median_home_value': info.median_home_value / 1000,
+      'median_household_income': info.median_household_income / 1000
+    })
+
+# add demographic data to sampling sites
+zipdata = pd.DataFrame(zipdata) 
+sites = pd.merge(sites, zipdata, how = 'inner', on = 'ZIP Code')
+sites = sites.drop_duplicates()
+
+# merge with location based information
+sites.rename(columns = {'Sample Site': 'sample_site'}, inplace = True)
+
+data = pd.merge(data, sites, on = 'sample_site')
+```
+
+# Visulization & Analysis
+::: {.incremental}
+## {.scrollable}
+
+
+:::
+
+
+
+# References
+::: {#refs}
+
+:::
