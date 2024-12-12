@@ -241,13 +241,7 @@ for col in data_test.columns:
 ```
 
 ```{python}
-<<<<<<< HEAD
 forecast_df
 #data_test
 ```
 
-=======
-#print(results.test_serial_correlation())
-print(results.summary())
-```
->>>>>>> 50fe6aa5e0cc5f03c847449bde501b3cc64faa88
