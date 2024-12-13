@@ -21,6 +21,7 @@ format:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
 from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
@@ -320,4 +321,13 @@ print('Accuracy:', accuracy_score(y_test, y_pred_logreg))
 print('Precision:', precision_score(y_test, y_pred_logreg))
 print('Recall:', recall_score(y_test, y_pred_logreg))
 print('F1 Score:', f1_score(y_test, y_pred_logreg))
+```
+
+```{python}
+X_train = sm.add_constant(X_train)
+model = sm.Logit(y_train, X_train)
+res = model.fit()
+
+# see importance of predictors
+res.summary()
 ```
