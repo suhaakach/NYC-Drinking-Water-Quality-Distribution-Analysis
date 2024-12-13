@@ -27,16 +27,18 @@ from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                                                             r2_score)
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from uszipcode import SearchEngine
+from sklearn.ensemble import RandomForestClassifier
 import seaborn as sns
 from pysal.lib import weights
 from pysal.model import spreg
 import gmplot
 import warnings
-from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler
 from collections import Counter
 import seaborn as sns
 warnings.filterwarnings("ignore")
@@ -265,8 +267,6 @@ plt.show()
 ## Preprocessing 
 
 ```{python}
-merged_df['ecoli'].mean()
-
 # create response variable based off national standards
 merged_df['compliant'] = (
   (merged_df['chlorine'] < 4) & (merged_df['ecoli'] < 0) & (
@@ -287,7 +287,7 @@ X = model_data.drop(columns = ['compliant'])
 y = model_data['compliant']
 
 # undersample
-rus = RandomUnderSampler(random_state = 0)
+rus = RandomOverSampler(random_state = 0)
 X, y = rus.fit_resample(X, y)
 
 model_data = pd.concat([X, y], axis = 1)
@@ -297,7 +297,7 @@ model_data['compliant'].value_counts()
 
 ```{python}
 # split data into train and test
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
 
 scaler = StandardScaler()
 
@@ -309,25 +309,53 @@ X_test = scaler.transform(X_test)
 ## Model Fitting & Evaluation
 
 ```{python}
-logreg = LogisticRegression(max_iter = 1000)
+# scale data
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
 
-# fit logistic regression model
-logreg.fit(X_train, y_train)
+# apply PCA to handle multicollinearity
+pca = PCA(n_components = 2)
+X = pca.fit_transform(X)
 
-# evaluate
-y_pred_logreg = logreg.predict(X_test)
-
-print('Accuracy:', accuracy_score(y_test, y_pred_logreg))
-print('Precision:', precision_score(y_test, y_pred_logreg))
-print('Recall:', recall_score(y_test, y_pred_logreg))
-print('F1 Score:', f1_score(y_test, y_pred_logreg))
+# split into training and testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state = 0)
 ```
 
 ```{python}
-X_train = sm.add_constant(X_train)
-model = sm.Logit(y_train, X_train)
-res = model.fit()
+param_grid = {
+    'n_estimators': [1, 2, 5, 10], 
+    'max_depth': [None, 5, 8, 10],   
+    'min_samples_split': [2, 5, 10],      
+    'min_samples_leaf': [1, 2, 4],        
+    'max_features': ['sqrt', 'log2']      
+}
 
-# see importance of predictors
-res.summary()
+rf = RandomForestClassifier(random_state = 0)
+
+# perform grid search
+grid_search = GridSearchCV(estimator = rf, param_grid = param_grid, scoring = 'accuracy',
+                                                                      cv = 5, n_jobs = -1)
+
+grid_search.fit(X_train, y_train)
+best_rf = grid_search.best_estimator_
+
+y_pred_rf = best_rf.predict(X_test)
+
+# evaluate
+print('Accuracy:', accuracy_score(y_test, y_pred_rf))
+print('Precision:', precision_score(y_test, y_pred_rf))
+print('Recall:', recall_score(y_test, y_pred_rf))
+print('F1 Score:', f1_score(y_test, y_pred_rf))
+```
+
+```{python}
+importances = best_rf.feature_importances_
+feature_names = X.columns
+
+# Plot feature importance
+plt.barh(feature_names, importances)
+plt.xlabel("Feature Importance")
+plt.ylabel("Feature")
+plt.title("Random Forest Feature Importance")
+plt.show()
 ```
