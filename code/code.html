@@ -83,9 +83,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#import-data-necessary-packages" id="toc-import-data-necessary-packages" class="nav-link active" data-scroll-target="#import-data-necessary-packages"><span class="header-section-number">1</span> Import Data &amp; Necessary Packages</a></li>
   <li><a href="#data-cleaning" id="toc-data-cleaning" class="nav-link" data-scroll-target="#data-cleaning"><span class="header-section-number">2</span> Data Cleaning</a>
   <ul class="collapse">
-  <li><a href="#borough-information" id="toc-borough-information" class="nav-link" data-scroll-target="#borough-information"><span class="header-section-number">2.1</span> borough information</a></li>
+  <li><a href="#borough-information" id="toc-borough-information" class="nav-link" data-scroll-target="#borough-information"><span class="header-section-number">2.1</span> Borough information</a></li>
   </ul></li>
   <li><a href="#visualization" id="toc-visualization" class="nav-link" data-scroll-target="#visualization"><span class="header-section-number">3</span> Visualization</a></li>
+  <li><a href="#modelling" id="toc-modelling" class="nav-link" data-scroll-target="#modelling"><span class="header-section-number">4</span> Modelling</a>
+  <ul class="collapse">
+  <li><a href="#preprocessing" id="toc-preprocessing" class="nav-link" data-scroll-target="#preprocessing"><span class="header-section-number">4.1</span> Preprocessing</a></li>
+  <li><a href="#model-fitting-evaluation" id="toc-model-fitting-evaluation" class="nav-link" data-scroll-target="#model-fitting-evaluation"><span class="header-section-number">4.2</span> Model Fitting &amp; Evaluation</a></li>
+  </ul></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="..\code.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li><li><a href="code.docx"><i class="bi bi-file-word"></i>MS Word</a></li></ul></div></nav>
 </div>
@@ -118,7 +123,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="import-data-necessary-packages" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Import Data &amp; Necessary Packages</h1>
-<div id="b2280d67" class="cell" data-execution_count="1">
+<div id="0fe67a4b" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -128,16 +133,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.tsa.stattools <span class="im">import</span> adfuller</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> (mean_absolute_error, mean_squared_error,</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>                                                            r2_score)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> uszipcode <span class="im">import</span> SearchEngine</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pysal.lib <span class="im">import</span> weights</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pysal.model <span class="im">import</span> spreg</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gmplot</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> StandardScaler</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score, precision_score, recall_score, f1_score</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> uszipcode <span class="im">import</span> SearchEngine</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pysal.lib <span class="im">import</span> weights</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pysal.model <span class="im">import</span> spreg</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gmplot</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> imblearn.under_sampling <span class="im">import</span> RandomUnderSampler</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> Counter</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="3e5678ee" class="cell" data-execution_count="2">
+<div id="bcd79402" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(<span class="st">'../data/Drinking_Water_Quality_Distribution_Monitoring_Data_20241116.csv'</span>,</span>
@@ -147,7 +159,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="data-cleaning" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Data Cleaning</h1>
-<div id="2b78195c" class="cell" data-execution_count="3">
+<div id="ddaffd30" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rename columns</span></span>
@@ -157,7 +169,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                                      <span class="st">'E.coli(Quanti-Tray) (MPN/100mL)'</span>: <span class="st">'ecoli'</span>}, inplace <span class="op">=</span> <span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="ee1fdbf2" class="cell" data-execution_count="4">
+<div id="49b0b424" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ensure sample time column is clean</span></span>
@@ -185,14 +197,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 4 2016-08-09 10:17:00</code></pre>
 </div>
 </div>
-<div id="0ffc1dad" class="cell" data-execution_count="5">
+<div id="a0112c75" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># drop unecessary columns and rows</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>data.drop(columns <span class="op">=</span> [<span class="st">'Sample Number'</span>, <span class="st">'Fluoride (mg/L)'</span>, <span class="st">'Sample Time'</span>], inplace <span class="op">=</span> <span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="2594ece3" class="cell" data-execution_count="6">
+<div id="3ea50bec" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># impute non-float values</span></span>
@@ -205,7 +217,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>data[<span class="st">'ecoli'</span>] <span class="op">=</span> data[<span class="st">'ecoli'</span>].astype(<span class="bu">float</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="e524c2d2" class="cell" data-execution_count="7">
+<div id="4be006e1" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check to make sure all values are possible</span></span>
@@ -214,7 +226,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> data[data[<span class="st">'ecoli'</span>] <span class="op">&gt;</span> <span class="dv">0</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="fe5fab39" class="cell" data-execution_count="8">
+<div id="51c893b8" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># only 4 missing values total - drop</span></span>
@@ -226,7 +238,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>(148701, 7)</code></pre>
 </div>
 </div>
-<div id="e78e037f" class="cell" data-execution_count="9">
+<div id="0e3f2409" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in data for sampling sites</span></span>
@@ -260,7 +272,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.merge(data, sites, on <span class="op">=</span> <span class="st">'sample_site'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="812cab61" class="cell" data-execution_count="10">
+<div id="c82f896a" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set 'sample_date' as the index and sort by 'sample_date'</span></span>
@@ -288,8 +300,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </details>
 </div>
 <section id="borough-information" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="borough-information"><span class="header-section-number">2.1</span> borough information</h2>
-<div id="9f610f76" class="cell" data-execution_count="11">
+<h2 data-number="2.1" class="anchored" data-anchor-id="borough-information"><span class="header-section-number">2.1</span> Borough information</h2>
+<div id="4e728514" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> uszipcode <span class="im">import</span> SearchEngine</span>
@@ -357,7 +369,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="visualization" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Visualization</h1>
-<div id="3d0c2c87" class="cell" data-execution_count="12">
+<div id="9f0daa04" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
@@ -378,8 +390,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># plotting the data for this borough</span></span>
 <span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    axes[i].plot(borough_data.index, borough_data[<span class="st">'chlorine'</span>], label<span class="op">=</span><span class="st">'Chlorine (mg/L)'</span>, color<span class="op">=</span><span class="st">'blue'</span>)</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    axes[i].plot(borough_data.index, borough_data[<span class="st">'turbidity'</span>], label<span class="op">=</span><span class="st">'Turbidity (NTU)'</span>, color<span class="op">=</span><span class="st">'orange'</span>)</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    axes[i].plot(borough_data.index, borough_data[<span class="st">'coliform'</span>], label<span class="op">=</span><span class="st">'Coliform (MPN/100mL)'</span>, color<span class="op">=</span><span class="st">'green'</span>)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    axes[i].plot(borough_data.index, borough_data[<span class="st">'turbidity'</span>], label<span class="op">=</span><span class="st">'Turbidity (NTU)'</span>, color <span class="op">=</span> <span class="st">'orange'</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    axes[i].plot(borough_data.index, borough_data[<span class="st">'coliform'</span>], label<span class="op">=</span><span class="st">'Coliform (MPN/100mL)'</span>, color <span class="op">=</span> <span class="st">'green'</span>)</span>
 <span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>    axes[i].plot(borough_data.index, borough_data[<span class="st">'ecoli'</span>], label<span class="op">=</span><span class="st">'E. coli (MPN/100mL)'</span>, color<span class="op">=</span><span class="st">'red'</span>)</span>
 <span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># set labels and title for each subplot</span></span>
@@ -401,6 +413,98 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="modelling" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Modelling</h1>
+<section id="preprocessing" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="preprocessing"><span class="header-section-number">4.1</span> Preprocessing</h2>
+<div id="ca9d69db" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">'ecoli'</span>].mean()</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># create response variable based off national standards</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">'compliant'</span>] <span class="op">=</span> (</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  (merged_df[<span class="st">'chlorine'</span>] <span class="op">&lt;</span> <span class="dv">4</span>) <span class="op">&amp;</span> (merged_df[<span class="st">'ecoli'</span>] <span class="op">&lt;</span> <span class="dv">0</span>) <span class="op">&amp;</span> (</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    merged_df[<span class="st">'turbidity'</span>] <span class="op">&lt;</span> <span class="dv">1</span>) <span class="op">&amp;</span> (merged_df[<span class="st">'coliform'</span>] <span class="op">&lt;</span> <span class="dv">0</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>).astype(<span class="bu">int</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">'compliant'</span>].value_counts()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<pre><code>compliant
+1    136710
+0     12158
+Name: count, dtype: int64</code></pre>
+</div>
+</div>
+<div id="75e4640c" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get dummy variables</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>model_data <span class="op">=</span> pd.get_dummies(merged_df, dtype <span class="op">=</span> <span class="bu">int</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>model_data.drop(columns <span class="op">=</span> [<span class="st">'borough_Bronx'</span>, <span class="st">'zip code'</span>], inplace <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co"># split into training and testing</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> model_data.drop(columns <span class="op">=</span> [<span class="st">'compliant'</span>])</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> model_data[<span class="st">'compliant'</span>]</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co"># undersample</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>rus <span class="op">=</span> RandomUnderSampler(random_state <span class="op">=</span> <span class="dv">0</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>X, y <span class="op">=</span> rus.fit_resample(X, y)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>model_data <span class="op">=</span> pd.concat([X, y], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>model_data[<span class="st">'compliant'</span>].value_counts()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="14">
+<pre><code>compliant
+0    12158
+1    12158
+Name: count, dtype: int64</code></pre>
+</div>
+</div>
+<div id="429d8f71" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># split data into train and test</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>X_train, X_test, y_train, y_test <span class="op">=</span> train_test_split(X, y, test_size <span class="op">=</span> <span class="fl">0.25</span>, random_state <span class="op">=</span> <span class="dv">42</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>scaler <span class="op">=</span> StandardScaler()</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co"># scale data</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> scaler.fit_transform(X_train)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> scaler.transform(X_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="model-fitting-evaluation" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="model-fitting-evaluation"><span class="header-section-number">4.2</span> Model Fitting &amp; Evaluation</h2>
+<div id="cad27347" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>logreg <span class="op">=</span> LogisticRegression(max_iter <span class="op">=</span> <span class="dv">1000</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># fit logistic regression model</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>logreg.fit(X_train, y_train)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>y_pred_logreg <span class="op">=</span> logreg.predict(X_test)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Accuracy:'</span>, accuracy_score(y_test, y_pred_logreg))</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Precision:'</span>, precision_score(y_test, y_pred_logreg))</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Recall:'</span>, recall_score(y_test, y_pred_logreg))</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'F1 Score:'</span>, f1_score(y_test, y_pred_logreg))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Accuracy: 0.9769698963645337
+Precision: 0.988191632928475
+Recall: 0.9653922214897824
+F1 Score: 0.9766588862954318</code></pre>
+</div>
+</div>
+</section>
 </section>
 
 </main>
