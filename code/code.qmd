@@ -31,6 +31,10 @@ from pysal.lib import weights
 from pysal.model import spreg
 import gmplot
 import warnings
+import contextily as cx
+from shapely.geometry import Point
+import seaborn as sns
+import geopandas as gpd
 warnings.filterwarnings("ignore")
 ```
 
@@ -65,7 +69,6 @@ data['turbidity'] = data['turbidity'].apply(lambda x: float(x))
 
 # Check the first few rows after creating 'sample_date'
 print(data[['sample_date']].head())
-
 ```
 
 ```{python}
@@ -157,10 +160,6 @@ data.to_csv('../data/data_merged.csv', index=False)
 
 ## Borough information
 
-
-
-# Modelling
-
 ```{python}
 from uszipcode import SearchEngine
 from sklearn.neighbors import KNeighborsClassifier
@@ -241,8 +240,8 @@ for i, borough in enumerate(boroughs_to_plot):
     
     # plotting the data for this borough
     axes[i].plot(borough_data.index, borough_data['chlorine'], label='Chlorine (mg/L)', color='blue')
-    axes[i].plot(borough_data.index, borough_data['turbidity'], label='Turbidity (NTU)', color='orange')
-    axes[i].plot(borough_data.index, borough_data['coliform'], label='Coliform (MPN/100mL)', color='green')
+    axes[i].plot(borough_data.index, borough_data['turbidity'], label='Turbidity (NTU)', color = 'orange')
+    axes[i].plot(borough_data.index, borough_data['coliform'], label='Coliform (MPN/100mL)', color = 'green')
     axes[i].plot(borough_data.index, borough_data['ecoli'], label='E. coli (MPN/100mL)', color='red')
     
     # set labels and title for each subplot
