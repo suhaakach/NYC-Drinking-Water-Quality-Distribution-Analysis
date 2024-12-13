@@ -21,17 +21,22 @@ format:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.api import VAR, VARMAX
+from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import adfuller
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                                                             r2_score)
 from uszipcode import SearchEngine
+import seaborn as sns
+from pysal.lib import weights
+from pysal.model import spreg
+import gmplot
+import warnings
+warnings.filterwarnings("ignore")
 ```
 
 ```{python}
 data = pd.read_csv('../data/Drinking_Water_Quality_Distribution_Monitoring_Data_20241116.csv',
-                                                                  low_memory = False)                     
+                                                                  low_memory = False)                       
 ```
 
 # Data Cleaning 
@@ -57,6 +62,10 @@ data['sample_date'] = pd.to_datetime(data['sample_date'] + ' ' + data['Sample Ti
 # change turbidity to float
 data.loc[data['turbidity'] == '<0.10', 'turbidity'] = '0.10'
 data['turbidity'] = data['turbidity'].apply(lambda x: float(x))
+
+# Check the first few rows after creating 'sample_date'
+print(data[['sample_date']].head())
+
 ```
 
 ```{python}
@@ -122,129 +131,128 @@ data = pd.merge(data, sites, on = 'sample_site')
 ```
 
 ```{python}
-dates = data['sample_date']
+# set 'sample_date' as the index and sort by 'sample_date'
+data = data.set_index('sample_date')
+data = data.sort_values(by='sample_date')
 
 # prepare for modelling
-data = data.drop(columns = ['OBJECTID', 'sample_class', 
+data = data.drop(columns = ['OBJECTID', 'sample_site', 'sample_class', 
                             'Sample Station (SS) - Location Description',
                             'X - Coordinate', 'Y - Coordinate',
                             'City or Placename'])
 
-# scale data
-scaler = StandardScaler()
-data = pd.DataFrame(scaler.fit_transform(data), columns = data.columns)
+# separate location data columns from the rest of the data
+location_columns = ['ZIP Code', 'latitude', 'longitude', 'housing_units', 'occupied_housing_units', 
+                    'median_home_value', 'median_household_income']
 
-# sort data 
-data['sample_date'] = dates
-data = data.set_index('sample_date')
-data = data.sort_values(by = 'sample_date', ascending = True)
+# identify the other columns (excluding location data)
+columns_to_scale = [col for col in data.columns if col not in location_columns]
+
+# scale only the non-location columns
+data[columns_to_scale] = (data[columns_to_scale] - data[columns_to_scale].mean()) / data[columns_to_scale].std()
+
+# save cleaned and merged data to new file
+data.to_csv('../data/data_merged.csv', index=False)
 ```
 
 ## Borough information
 
 
+
 # Modelling
 
 ```{python}
-def check_stationarity(series):
-    '''Check stationarity of column using Augmented Dickey-Fuller test'''
-    result = adfuller(series)
-    print(f'ADF Statistic: {result[0]}')
-    print(f'p-value: {result[1]}')
-    if result[1] <= 0.05:
-        print('The series is stationary.')
-        print()
-    else:
-        print('The series is not stationary.')
-        print()
+from uszipcode import SearchEngine
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import LabelEncoder
 
-# check stationarities
-for col in ['chlorine', 'turbidity', 'coliform', 'ecoli']:
-    print(f'Checking stationarity for {col}')
-    check_stationarity(data[col])
+# lowercase column names
+data.columns = data.columns.str.lower()
+
+# initialize the search engine
+search = SearchEngine()
+
+# list of nyc boroughs
+nyc_boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']
+
+# function to get the borough only if it's one of the 5 boroughs
+def get_borough(zipcode):
+    info = search.by_zipcode(zipcode)
+    
+    if info and hasattr(info, 'major_city'):
+        # check if the major city corresponds to one of the 5 boroughs
+        major_city = info.major_city
+        if major_city in nyc_boroughs:
+            return major_city
+    return None  # return None if it's not one of the 5 boroughs
+
+# apply the function to 'zip code' column and create a new column 'borough'
+data['borough'] = data['zip code'].apply(lambda x: get_borough(str(x)))
+
+# fill missing boroughs with KNN
+
+# only use rows where borough is not null for training the model
+impute_X = data[data['borough'].notnull()][['latitude', 'longitude']]
+impute_Y = data[data['borough'].notnull()]['borough']
+
+# encode borough labels for classification
+encoder = LabelEncoder()
+impute_Y = encoder.fit_transform(impute_Y)
+
+# initialize KNN classifier and train it
+knn = KNeighborsClassifier()
+knn.fit(impute_X, impute_Y)
+
+# for missing boroughs, use latitude and longitude to predict
+X_missing = data[data['borough'].isnull()][['latitude', 'longitude']]
+
+# predict missing boroughs
+predicted_labels = knn.predict(X_missing)
+predicted_boroughs = encoder.inverse_transform(predicted_labels)
+
+# fill missing boroughs in the data
+data.loc[data['borough'].isnull(), 'borough'] = predicted_boroughs
+
+# check for remaining missing borough values
+print(f'Missing boroughs after imputation: {data["borough"].isnull().sum()}')
+
+# Save the updated data with borough names
+data.to_csv('../data/merged_data_with_borough.csv', index=False)
+
 ```
 
+# Visualization
 ```{python}
-# split into training and testing
-train_size = int(len(data) * 0.7)
+import seaborn as sns
 
-data_train = data[:train_size]
-data_test = data[train_size:]
-```
+# load your data
+merged_df = pd.read_csv('../data/merged_data_with_borough.csv')
 
-```{python}
-model = VAR(data_train)
-```
+# define the list of boroughs to plot
+boroughs_to_plot = ['Brooklyn', 'Bronx', 'Staten Island']
 
-```{python}
-lag_results = {}
+# set up a figure to hold multiple subplots (3 boroughs)
+fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(10, 15))
 
-# iterate through range of possible lags
-for i in range(1, 31):
-  result = model.fit(i)
-  lag_results[i] = {
-    'AIC': result.aic,
-    'BIC': result.bic,
-    'HQIC': result.hqic,
-    }
+# loop over each borough and create a plot
+for i, borough in enumerate(boroughs_to_plot):
+    # filter data for the current borough
+    borough_data = merged_df[merged_df['borough'] == borough]
+    
+    # plotting the data for this borough
+    axes[i].plot(borough_data.index, borough_data['chlorine'], label='Chlorine (mg/L)', color='blue')
+    axes[i].plot(borough_data.index, borough_data['turbidity'], label='Turbidity (NTU)', color='orange')
+    axes[i].plot(borough_data.index, borough_data['coliform'], label='Coliform (MPN/100mL)', color='green')
+    axes[i].plot(borough_data.index, borough_data['ecoli'], label='E. coli (MPN/100mL)', color='red')
+    
+    # set labels and title for each subplot
+    axes[i].set_title(f'Water Quality Levels for {borough}', fontsize=14)
+    axes[i].set_xlabel('Sample Date', fontsize=12)
+    axes[i].set_ylabel('Level', fontsize=12)
+    axes[i].legend(loc='upper right')
 
-# find best lag by metric
-best_aic = min(lag_results, key = lambda x: lag_results[x]['AIC'])
-best_bic = min(lag_results, key = lambda x: lag_results[x]['BIC'])
-best_hqic = min(lag_results, key = lambda x: lag_results[x]['HQIC'])
+# adjust layout to avoid overlapping labels
+plt.tight_layout()
 
-print(f'Best lag by AIC: {best_aic}')
-print(f'Best lag by BIC: {best_bic}')
-print(f'Best lag by HQIC: {best_hqic}')
-```
-
-```{python}
-lags = list(lag_results.keys())
-aic_values = [lag_results[lag]['AIC'] for lag in lags]
-bic_values = [lag_results[lag]['BIC'] for lag in lags]
-hqic_values = [lag_results[lag]['HQIC'] for lag in lags]
-
-# plot AIC, BIC, and HQIC for range of lags
-plt.plot(lags, aic_values, label = 'AIC', marker = 'o')
-plt.plot(lags, bic_values, label = 'BIC', marker = 'o')
-plt.plot(lags, hqic_values, label = 'HQIC', marker = 'o')
-plt.xlabel('Lag Order')
-plt.ylabel('Information Criterion')
-plt.title('Lag Order Selection (Custom Range)')
-plt.legend()
 plt.show()
 ```
-
-```{python}
-# fit model
-results = model.fit(maxlags = 27)
-
-# create predictions
-forecast_input = data_train.values[-results.k_ar:]
-forecast = results.forecast(forecast_input, steps = len(data_test))
-forecast_df = pd.DataFrame(forecast, index = data_test.index, 
-                                        columns = data_test.columns)
-```
-
-```{python}
-# calculate metrics
-mae = mean_absolute_error(data_test, forecast_df)
-rmse = mean_squared_error(data_test, forecast_df, squared = False)
-
-print(f'MAE: {mae}')
-print(f'RMSE: {rmse}')
-```
-
-```{python}
-for col in data_test.columns:
-  actual = data_test[col]
-  pred = forecast_df[col]
-
-  print(f'R-squared for {col} on test set: {r2_score(actual, pred):.4f}')
-```
-
-```{python}
-forecast_df
-#data_test
-```
-
