@@ -264,7 +264,7 @@ plt.show()
 
 # Modelling 
 
-## Preprocessing 
+## Encoding Response Variable 
 
 ```{python}
 # create response variable based off national standards
@@ -280,7 +280,8 @@ merged_df['compliant'].value_counts()
 # get dummy variables
 model_data = pd.get_dummies(merged_df, dtype = int)
 
-model_data.drop(columns = ['borough_Bronx', 'zip code'], inplace = True)
+model_data.drop(columns = ['borough_Bronx', 'zip code', 'latitude', 'longitude'], 
+                                                                  inplace = True)
 
 # split into training and testing
 X = model_data.drop(columns = ['compliant'])
@@ -293,17 +294,6 @@ X, y = rus.fit_resample(X, y)
 model_data = pd.concat([X, y], axis = 1)
 
 model_data['compliant'].value_counts()
-```
-
-```{python}
-# split data into train and test
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
-
-scaler = StandardScaler()
-
-# scale data
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
 ```
 
 ## Model Fitting & Evaluation
@@ -350,12 +340,18 @@ print('F1 Score:', f1_score(y_test, y_pred_rf))
 
 ```{python}
 importances = best_rf.feature_importances_
-feature_names = X.columns
+components = pca.components_
+feature_names = merged_df.drop(columns = ['compliant']).columns
 
-# Plot feature importance
-plt.barh(feature_names, importances)
-plt.xlabel("Feature Importance")
-plt.ylabel("Feature")
-plt.title("Random Forest Feature Importance")
-plt.show()
+# contribution of each feature to each principal component
+contributions = pd.DataFrame(components, columns = feature_names, 
+                              index=[f'PC{i+1}' for i in range(components.shape[0])])
+
+# get feature importances and sort
+feature_contributions = importances.dot(components)
+feature_importance_df = pd.DataFrame(feature_contributions, index = feature_names, 
+                                                            columns = ['Importance'])
+feature_importance_df = feature_importance_df.sort_values(by = 'Importance', ascending=False)
+
+feature_importance_df
 ```
