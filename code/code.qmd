@@ -27,6 +27,8 @@ from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                                                             r2_score)
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from uszipcode import SearchEngine
 import seaborn as sns
 from pysal.lib import weights
@@ -300,7 +302,18 @@ scaler = StandardScaler()
 
 # scale data
 X_train = scaler.fit_transform(X_train)
-X_test = scaler.fit(X_test)
+X_test = scaler.transform(X_test)
 ```
 
 ## Model Fitting & Evaluation
+
+```{python}
+logreg = LogisticRegression(max_iter = 1000)
+
+# fit logistic regression model
+logreg.fit(X_train, y_train)
+
+# evaluate
+y_pred_logreg = logreg.predict(X_test)
+print('Accuracy:', accuracy_score(y_test, y_pred_logreg))
+```
