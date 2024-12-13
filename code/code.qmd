@@ -143,7 +143,6 @@ data = data.sort_values(by = 'sample_date', ascending = True)
 ## Borough information
 
 
-
 # Modelling
 
 ```{python}
