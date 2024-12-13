@@ -341,7 +341,7 @@ print('F1 Score:', f1_score(y_test, y_pred_rf))
 ```{python}
 importances = best_rf.feature_importances_
 components = pca.components_
-feature_names = merged_df.drop(columns = ['compliant']).columns
+feature_names = model_data.drop(columns = ['compliant']).columns
 
 # contribution of each feature to each principal component
 contributions = pd.DataFrame(components, columns = feature_names, 
