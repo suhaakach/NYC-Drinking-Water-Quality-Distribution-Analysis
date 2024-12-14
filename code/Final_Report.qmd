@@ -1,0 +1,506 @@
+---
+title: "Final Project"
+author: "Suha Akach & Isabelle Perez"
+toc: true
+number-sections: true
+highlight-style: pygments
+format: 
+  html: 
+    code-fold: true
+    html-math-method: katex
+  pdf: 
+    geometry: 
+      - top=30mm
+      - left=20mm
+  docx: default
+---
+
+# Import Data & Necessary Packages
+
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.api import VAR
+from statsmodels.tsa.stattools import adfuller
+from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+                                                            r2_score)
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from uszipcode import SearchEngine
+import seaborn as sns
+from pysal.lib import weights
+from pysal.model import spreg
+import gmplot
+import warnings
+from imblearn.under_sampling import RandomUnderSampler
+from collections import Counter
+import seaborn as sns
+warnings.filterwarnings("ignore")
+```
+
+```{python}
+data = pd.read_csv('../data/Drinking_Water_Quality_Distribution_Monitoring_Data_20241116.csv',
+                                                                  low_memory = False)                       
+```
+
+# Data Cleaning 
+
+```{python}
+# rename columns
+data.rename(columns = {'Sample Date': 'sample_date', 'Sample Site': 'sample_site', 
+              'Sample class': 'sample_class', 'Residual Free Chlorine (mg/L)': 'chlorine',
+              'Turbidity (NTU)': 'turbidity', 'Coliform (Quanti-Tray) (MPN /100mL)': 'coliform',
+                                      'E.coli(Quanti-Tray) (MPN/100mL)': 'ecoli'}, inplace = True)
+```
+
+```{python}
+# ensure sample time column is clean
+data.dropna(subset = ['Sample Time'], inplace = True)
+
+# standardize format of sample time
+data['Sample Time'] = data['Sample Time'].apply(lambda x: x[11:16] if len(x) > 5 else x)
+
+# change to datetime format
+data['sample_date'] = pd.to_datetime(data['sample_date'] + ' ' + data['Sample Time'])
+
+# change turbidity to float
+data.loc[data['turbidity'] == '<0.10', 'turbidity'] = '0.10'
+data['turbidity'] = data['turbidity'].apply(lambda x: float(x))
+
+# Check the first few rows after creating 'sample_date'
+print(data[['sample_date']].head())
+```
+
+```{python}
+# drop unecessary columns and rows
+data.drop(columns = ['Sample Number', 'Fluoride (mg/L)', 'Sample Time'], inplace = True)
+```
+
+```{python}
+# impute non-float values
+catval = {'<0.10': float(0.09), '<1': float(0.99), '>200.5': float(200.6)}
+data = data.replace(catval)
+
+# change data types to float
+data['chlorine'] = data['chlorine'].astype(float)
+data['coliform'] = data['coliform'].astype(float)
+data['ecoli'] = data['ecoli'].astype(float)
+```
+
+```{python}
+# check to make sure all values are possible
+data = data[data['chlorine'] > 0]
+data = data[data['coliform'] > 0]
+data = data[data['ecoli'] > 0]
+```
+
+```{python}
+# only 4 missing values total - drop
+data = data.dropna()
+
+data.shape
+```
+
+# Pulling Location Information from Site Sample Data
+
+```{python}
+# read in data for sampling sites
+sites = pd.read_csv('../data/sampling_sites_extended.csv')
+
+# use search engine to find demographic data
+search = SearchEngine() 
+
+zipdata = [] 
+
+for zipcode in sites['ZIP Code']: 
+  info = search.by_zipcode(zipcode)
+
+  if bool(info) == True: 
+    zipdata.append({
+      'ZIP Code': zipcode,
+      'housing_units': info.housing_units / 1000,
+      'occupied_housing_units': info.occupied_housing_units / 1000, 
+      'median_home_value': info.median_home_value / 1000,
+      'median_household_income': info.median_household_income / 1000
+    })
+
+# add demographic data to sampling sites
+zipdata = pd.DataFrame(zipdata) 
+sites = pd.merge(sites, zipdata, how = 'inner', on = 'ZIP Code')
+sites = sites.drop_duplicates()
+
+# merge with location based information
+sites.rename(columns = {'Sample Site': 'sample_site'}, inplace = True)
+
+data = pd.merge(data, sites, on = 'sample_site')
+```
+
+```{python}
+#| eval: false
+# set 'sample_date' as the index and sort by 'sample_date'
+data = data.set_index('sample_date')
+data = data.sort_values(by='sample_date')
+
+# prepare for modelling
+data = data.drop(columns = ['OBJECTID', 'sample_site', 'sample_class', 
+                            'Sample Station (SS) - Location Description',
+                            'X - Coordinate', 'Y - Coordinate',
+                            'City or Placename'])
+
+# separate location data columns from the rest of the data
+location_columns = ['ZIP Code', 'latitude', 'longitude', 'housing_units', 'occupied_housing_units', 
+                    'median_home_value', 'median_household_income']
+
+# identify the other columns (excluding location data)
+columns_to_scale = [col for col in data.columns if col not in location_columns]
+
+# scale only the non-location columns
+data[columns_to_scale] = (data[columns_to_scale] - data[columns_to_scale].mean()) / data[columns_to_scale].std()
+
+# save cleaned and merged data to new file
+data.to_csv('data/data_merged.csv', index=False)
+```
+
+## Borough Information
+We 
+```{python}
+#| eval: false
+from uszipcode import SearchEngine
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import LabelEncoder
+
+# lowercase column names
+data.columns = data.columns.str.lower()
+
+# initialize the search engine
+search = SearchEngine()
+
+# list of nyc boroughs
+nyc_boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']
+
+# Define a dictionary mapping neighborhoods/cities to boroughs
+neighborhood_to_borough = {
+    # Manhattan neighborhoods
+    'New York': 'Manhattan',
+    'Harlem': 'Manhattan',
+    'Upper West Side': 'Manhattan',
+    'Upper East Side': 'Manhattan',
+    'Chelsea': 'Manhattan',
+    'SoHo': 'Manhattan',
+    'Greenwich Village': 'Manhattan',
+    'Tribeca': 'Manhattan',
+    'Financial District': 'Manhattan',
+    'Lower East Side': 'Manhattan',
+    'East Village': 'Manhattan',
+    'Midtown': 'Manhattan',
+
+    # Queens neighborhoods
+    'Forest Hills': 'Queens',
+    'Jackson Heights': 'Queens',
+    'Astoria': 'Queens',
+    'Ridgewood': 'Queens',
+    'Sunnyside': 'Queens',
+    'Flushing': 'Queens',
+    'Long Island City': 'Queens',
+    'Woodside': 'Queens',
+    'Bayside': 'Queens',
+    'Rego Park': 'Queens',
+    'Elmhurst': 'Queens',
+    'Kew Gardens': 'Queens',
+    'Oakland Gardens': 'Queens',
+    'Fresh Meadows': 'Queens',
+    'Whitestone': 'Queens',
+    'Corona': 'Queens',
+    'Maspeth': 'Queens',
+    'Jamaica': 'Queens',
+    'Queens Village': 'Queens',
+    'South Ozone Park': 'Queens',
+    'Far Rockaway': 'Queens',
+}
+
+def get_borough(zipcode):
+    # Fetch the information about the zipcode
+    info = search.by_zipcode(zipcode)
+    if info and info.major_city:
+        major_city = info.major_city
+        print(f"Zipcode {zipcode}: major city = {major_city}")  # Debugging output
+        
+        # First, check if the city or neighborhood is explicitly mapped to a borough
+        if major_city in neighborhood_to_borough:
+            return neighborhood_to_borough[major_city]
+        
+        # If not, check if it's one of the 5 NYC boroughs
+        if major_city in nyc_boroughs:
+            return major_city
+        
+    return None
+
+# Apply the function to the 'zip code' column to create a new 'borough' column
+data['borough'] = data['zip code'].apply(lambda x: get_borough(str(x)))
+
+# Handle missing boroughs using KNN
+
+# Only use rows where borough is not null for training the model
+impute_X = data[data['borough'].notnull()][['latitude', 'longitude']]
+impute_Y = data[data['borough'].notnull()]['borough']
+
+# Encode borough labels for classification
+encoder = LabelEncoder()
+impute_Y = encoder.fit_transform(impute_Y)
+
+# Initialize and train the KNN classifier
+knn = KNeighborsClassifier()
+knn.fit(impute_X, impute_Y)
+
+# Predict missing boroughs based on latitude and longitude
+X_missing = data[data['borough'].isnull()][['latitude', 'longitude']]
+predicted_labels = knn.predict(X_missing)
+predicted_boroughs = encoder.inverse_transform(predicted_labels)
+
+# Fill missing boroughs in the data
+data.loc[data['borough'].isnull(), 'borough'] = predicted_boroughs
+
+# Check for remaining missing borough values
+print(f'Missing boroughs after imputation: {data["borough"].isnull().sum()}')
+
+# manually update the boroughs based on the `neighborhood_to_borough` dictionary
+for neighborhood, borough in neighborhood_to_borough.items():
+    data.loc[data['borough'] == neighborhood, 'borough'] = borough
+
+# Save the updated DataFrame
+data.to_csv('data/merged_data_with_borough.csv', index=False)
+
+```
+
+#  Visualization of Chemical Levels by the Least and Most Densely Populated Boroughs
+```{python}
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+
+merged_df = pd.read_csv('../data/borough.csv')
+
+# list of boroughs to plot (only Manhattan and Staten Island)
+boroughs_to_plot = ['Staten Island', 'Manhattan']
+
+# figure to hold 4 subplots (one for each variable per borough)
+fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(15, 20))
+
+# threshold values for each chemical
+thresholds = {
+    'chlorine': 4,  # mg/L
+    'turbidity': 0.3,  # NTU
+    'coliform': 2.67,  # MPN/100mL
+    'ecoli': 0  # MPN/100mL
+}
+
+# loop over each borough and create plots
+for i, borough in enumerate(boroughs_to_plot):
+    # filter data for the current borough
+    borough_data = merged_df[merged_df['borough'] == borough]
+
+    # plot for Coliform levels (MPN/100mL)
+    ax = axes[0, i]  # Top row
+    ax.plot(borough_data.index, borough_data['coliform'], label='Coliform (MPN/100mL)', color='green')
+    ax.axhline(y=thresholds['coliform'], color='green', linestyle='--', label='Max Coliform Threshold (2.67 MPN/100mL)')
+    ax.set_title(f'Coliform Levels for {borough} (MPN/100mL)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+    # plot for E. coli levels (MPN/100mL)
+    ax = axes[1, i]  # Second row
+    ax.plot(borough_data.index, borough_data['ecoli'], label='E. coli (MPN/100mL)', color='red')
+    ax.axhline(y=thresholds['ecoli'], color='red', linestyle='--', label='Max E. coli Threshold (126 MPN/100mL)')
+    ax.set_title(f'E. coli Levels for {borough} (MPN/100mL)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+    # plot for Turbidity levels (NTU)
+    ax = axes[2, i]  # Third row
+    ax.plot(borough_data.index, borough_data['turbidity'], label='Turbidity (NTU)', color='orange')
+    ax.axhline(y=thresholds['turbidity'], color='orange', linestyle='--', label='Max Turbidity Threshold (0.3 NTU)')
+    ax.set_title(f'Turbidity Levels for {borough} (NTU)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+    # plot for Chlorine levels (mg/L)
+    ax = axes[3, i]  # Fourth row
+    ax.plot(borough_data.index, borough_data['chlorine'], label='Chlorine (mg/L)', color='blue')
+    ax.axhline(y=thresholds['chlorine'], color='blue', linestyle='--', label='Max Chlorine Threshold (4 mg/L)')
+    ax.set_title(f'Chlorine Levels for {borough} (mg/L)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+plt.tight_layout()
+
+plt.show()
+
+```
+
+# Logistic Regression Modelling 
+
+## Analyzing how boroughs predict water quality
+### Function to preprocess and create the 'compliant' target variable
+```{python}
+from sklearn.model_selection import train_test_split, GridSearchCV, learning_curve
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+
+def preprocess_data(df):
+    df['compliant'] = (
+        (df['chlorine'] > 0.2) & (df['chlorine'] < 1.0) & 
+        (df['ecoli'] <= 0) & 
+        (df['turbidity'] < 0.3) & 
+        (df['coliform'] < 2.67)
+    ).astype(int)
+    return df
+```
+
+### Function to resample the data using SMOTE
+```{python}
+def resample_data(X, y):
+    smote = SMOTE(random_state=0)
+    X_resampled, y_resampled = smote.fit_resample(X, y)
+    return X_resampled, y_resampled
+```
+
+
+### Function for hyperparameter tuning using GridSearchCV
+```{python}
+def grid_search_tuning(X_train, y_train):
+    param_grid = {
+        'C': [0.001, 0.01, 0.1, 1, 10],
+        'penalty': ['elasticnet'],
+        'l1_ratio': [0.1, 0.5, 0.9],  # ratio between L1 and L2 (0 = L2, 1 = L1)
+        'solver': ['saga']
+    }
+
+    logreg = LogisticRegression(max_iter=1000)
+    grid_search = GridSearchCV(logreg, param_grid, cv=5, scoring='f1', n_jobs=-1)
+    grid_search.fit(X_train, y_train)
+
+    print(f"Best parameters: {grid_search.best_params_}")
+    print(f"Best cross-validation score (F1): {grid_search.best_score_}")
+
+    return grid_search.best_estimator_
+```
+
+
+### Function to train and evaluate the model using the best parameters from GridSearchCV
+```{python}
+
+def train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg, threshold=0.3):
+    # standardize the features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # fit the Logistic Regression model with the best parameters
+    best_logreg.fit(X_train_scaled, y_train)
+
+    # get predicted probabilities and adjust threshold
+    y_pred_prob = best_logreg.predict_proba(X_test_scaled)[:, 1]
+    y_pred_adjusted = (y_pred_prob > threshold).astype(int)
+
+    # evaluation metrics
+    print('Accuracy:', accuracy_score(y_test, y_pred_adjusted))
+    print('Precision:', precision_score(y_test, y_pred_adjusted))
+    print('Recall:', recall_score(y_test, y_pred_adjusted))
+    print('F1 Score:', f1_score(y_test, y_pred_adjusted))
+
+    cm = confusion_matrix(y_test, y_pred_adjusted)
+    print(cm)
+
+    return best_logreg
+```
+
+### Function to plot feature importance
+```{python}
+def plot_feature_importance(model, X):
+    coefficients = model.coef_[0]
+    feature_names = X.columns
+
+    feature_importance_df = pd.DataFrame({
+        'Feature': feature_names,
+        'Coefficient': coefficients,
+        'Absolute Coefficient': abs(coefficients)
+    })
+    
+    feature_importance_df = feature_importance_df.sort_values(by='Absolute Coefficient', ascending=False)
+
+    # feature importance
+    print(feature_importance_df)
+
+    plt.figure(figsize=(10, 6))
+    plt.barh(feature_importance_df['Feature'], feature_importance_df['Absolute Coefficient'], color='skyblue')
+    plt.xlabel('Absolute Coefficient')
+    plt.title('Feature Importance (Logistic Regression)')
+    plt.gca().invert_yaxis()  # Invert y-axis to show the most important features at the top
+    plt.show()
+```
+
+### Function to plot the learning curve
+```{python}
+def plot_learning_curve(model, X_train, y_train):
+    train_sizes, train_scores, test_scores = learning_curve(
+        model, X_train, y_train, cv=5, n_jobs=-1,
+        train_sizes=np.linspace(0.1, 1.0, 10), scoring='f1')
+
+    # calculate the mean and standard deviation for plotting
+    train_mean = train_scores.mean(axis=1)
+    train_std = train_scores.std(axis=1)
+    test_mean = test_scores.mean(axis=1)
+    test_std = test_scores.std(axis=1)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(train_sizes, train_mean, color='blue', label='Training score')
+    plt.plot(train_sizes, test_mean, color='red', label='Cross-validation score')
+    plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, alpha=0.1, color='blue')
+    plt.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, alpha=0.1, color='red')
+    plt.title("Learning Curve (Logistic Regression)")
+    plt.xlabel("Number of Training Samples")
+    plt.ylabel("F1 Score")
+    plt.legend(loc="best")
+    plt.show()
+
+```
+
+# Main pipeline
+```{python}
+# step 1: preprocess data
+merged_df = preprocess_data(merged_df)
+
+# step 2: get dummy variables
+model_data = pd.get_dummies(merged_df, dtype=int)
+model_data.drop(columns=['zip code'], inplace=True)
+
+X = model_data.drop(columns=['compliant'])
+y = model_data['compliant']
+
+# step 3: resample data
+X_resampled, y_resampled = resample_data(X, y)
+
+# step 4: split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25, random_state=4188)
+
+# step 5: perform gridsearchcv to find the best hyperparameters
+best_logreg = grid_search_tuning(X_train, y_train)
+
+# step 6: train and evaluate the logistic regression model with the best hyperparameters
+best_logreg = train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg)
+
+# step 7: plot the learning curve
+plot_learning_curve(best_logreg, X_train, y_train)
+
+# step 8: plot feature importance
+plot_feature_importance(best_logreg, X)
+```
