@@ -17,7 +17,7 @@ bibliography: ref.bib
 
 # Objectives
 ::: {.incremental}
-- Monitering water quality by different chemical presence over time.
+- Monitoring water quality by different chemical presence over time.
 - Finding areas of concern for water quality in NYC.
 - Finding predictors of water quality.
 :::
@@ -32,9 +32,9 @@ bibliography: ref.bib
 # Data Cleaning
 ## {.scrollable}
 - Dropped and cleaned columns using Pandas.
-    - Unessasary columns: Sample Number, Fluoride (mg/L), Sample Time.
-- Improved column readibilty.
-- Strandized format of our sample time column.
+    - Unecessary columns: Sample Number, Fluoride (mg/L), Sample Time.
+- Improved column readability.
+- Standardized format of our sample time column.
 - Fixed column data types.
 ```{python}
 import pandas as pd
@@ -260,7 +260,7 @@ def grid_search_tuning(X_train, y_train):
 
 # Function to Train and Evaluate the Model Using the Best Parameters from GridSearchCV
 ## {.scrollable}
-- A 0.3 threshold to find predictions with probabilities above 0.3 which will be classified as 1 (compliant), and below will be 0 (non-compliant).
+- A $0.3$ threshold to find predictions with probabilities above $0.3$ which will be classified as $1$ (compliant), and below will be $0$ (non-compliant).
 - Standardized the features by removing the mean and scaling to unit variance. This is important for our model since it is sensitive to the scale of the features.
 ```{python}
 #| echo : true
@@ -375,8 +375,8 @@ plot_feature_importance(best_logreg, X)
 # Analysis & Conclusion
 ::: {.incremental}
 ## {.scrollable}
-- The model has a accuracy of 75% and very high recall (99.7%), meaning it is excellent at detecting compliance. However, this comes at the cost of a lower precision (66.6%), which means the model over-predicts compliance, classifying too many non-compliant instances as compliant.
-- The F1 score is good (80.8%), reflecting a balance between precision and recall.
+- The model has an accuracy of $75$% and very high recall ($99.7$%), meaning it is excellent at detecting compliance. However, this comes at the cost of a lower precision ($66.6$%), which means the model over-predicts compliance, classifying too many non-compliant instances as compliant.
+- The F1 score is good ($80.8$%), reflecting a balance between precision and recall.
 - The model’s performance metrics indicate it is particularly good at identifying the positive class (compliant), but it could be improved in reducing false positives.
 - Feature importance indicates that boroughs along with household income, value and occupied units do have a positive indication of water compliance even though they aren't strong. 
 :::
