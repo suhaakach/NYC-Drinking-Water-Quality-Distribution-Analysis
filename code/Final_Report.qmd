@@ -550,64 +550,68 @@ plot_feature_importance(best_logreg, X)
 
 # Data Analysis & Overall Results:
 
-The goal of this project was to analyze factors that affect water quality and predict whether water sampling sites across NYC comply with national standards for drinking water cleanliness. The dataset contains measurements of various bacteria in water samples, and we used logistic regression to predict compliance, with the response variable being a binary classification: compliant (1) or non-compliant (0).
+The **goal** of this project was to analyze factors that affect water quality and predict whether water sampling sites across NYC comply with national standards for drinking water cleanliness. The dataset contains measurements of various bacteria in water samples, and we used logistic regression to predict compliance, with the response variable being a binary classification: compliant (1) or non-compliant (0).
 
 We began by importing the required libraries and packages necessary for data analysis, including pandas, scikit-learn, imblearn, and visualization libraries like matplotlib.
 
-In terms of data cleaning, we started with fixing date columns. We merged separate date and time columns into a single datetime column for easier analysis. We dropped unnecessary columns. We removed columns with irrelevant information or missing data, ensuring the dataset was clean and ready for analysis.
+In terms of **data cleaning**, we started with fixing date columns. We merged separate date and time columns into a single datetime column for easier analysis. We dropped unnecessary columns. We removed columns with irrelevant information or missing data, ensuring the dataset was clean and ready for analysis.
 
-Data Type Conversions: We converted categorical values (less than/greater than) to numerical values and ensured key columns (e.g., chlorine, ecoli, coliform) were cast as float types.
+**Data Type Conversions**: We converted categorical values (less than/greater than) to numerical values and ensured key columns (e.g., chlorine, ecoli, coliform) were cast as float types.
 
-Handling Missing Data: After addressing missing values, we ended up with a cleaned dataset of size (148701, 7).
+**Handling Missing Data**: After addressing missing values, we ended up with a cleaned dataset of size (148701, 7).
 
-Pulling Location Information:
+**Pulling Location Information**:
 Using the uszipcode package, we pulled demographic data based on the zip code of each sample site. We added borough information and imputed missing borough data using K-Nearest Neighbors and geographic coordinates (latitude and longitude).
 
-Visualization of Chemical Levels by Borough:
+**Visualization** of Chemical Levels by Borough:
 We visualized the chemical levels for the least and most densely populated boroughs. We applied the relevant threshold values for chemical concentrations to observe trends in different locations.
 
-Logistic Regression Modelling:
-We defined a binary target variable compliant based on water quality standards for chlorine, ecoli, turbidity, and coliform. A value of 1 indicates compliance, and 0 indicates non-compliance. Since the dataset was imbalanced (more compliant than non-compliant samples), we used SMOTE (Synthetic Minority Over-sampling Technique) to generate synthetic data for the minority class (non-compliant) to improve model performance. We performed hyperparameter tuning to find the best logistic regression parameters using grid search. We tested different values for C (regularization strength), penalty, l1_ratio (for elastic net regularization), and the solver. The best parameters found were:
+**Logistic Regression Modelling**:
 
-C: 0.001
-Penalty: elasticnet
-L1 Ratio: 0.9
-Solver: saga
+We defined a binary target variable compliant based on water quality standards for chlorine, ecoli, turbidity, and coliform. A value of 1 indicates compliance, and 0 indicates non-compliance. Since the dataset was imbalanced (more compliant than non-compliant samples), we used SMOTE (Synthetic Minority Over-sampling Technique) to generate synthetic data for the minority class (non-compliant) to improve model performance.
 
-We used the best hyperparameters from the grid search and trained the logistic regression model on the data. We set a threshold of 0.3 for classifying non-compliant water. This adjustment helped to deal with the class imbalance and optimized model performance. We analyzed the importance of features in predicting water quality. Regularization (L1 and L2) helped penalize less significant features. The most important features influencing predictions were chlorine levels, turbidity, and the geographical location of the sampling sites (boroughs). We plotted the learning curve to monitor model performance over increasing training sizes. The curve showed stable and high F1 scores, indicating that the model improved with more data. The pipeline incorporated all the steps, from preprocessing data to model evaluation:
+In term of choosing the **hyperpamaters**, we found best hyperparameters from doing a grid search and trained the logistic regression model on the best hyper parameters provided. We set a threshold of 0.3 for classifying non-compliant water. This adjustment helped to deal with the class imbalance and optimized model performance. We analyzed the importance of features in predicting water quality. Regularization (L1 and L2) helped penalize less significant features. The most important features influencing predictions were chlorine levels, turbidity, and the geographical location of the sampling sites (boroughs).
 
-Best parameters: {'C': 0.001, 'l1_ratio': 0.9, 'penalty': 'elasticnet', 'solver': 'saga'}
+We plotted the **learning curve** to monitor model performance over increasing training sizes. The curve showed stable and high F1 scores, indicating that the model improved with more data. The pipeline incorporated all the steps, from preprocessing data to model evaluation:
 
-Best cross-validation score (F1): 0.808
+**Best cross-validation score (F1)**: 0.808
 
 Model Evaluation:
 
-Accuracy: 74.92%
-Precision: 66.64%
-Recall: 99.71%
-F1 Score: 79.89%
-Confusion Matrix:
+- Accuracy: 74.92%
+
+- Precision: 66.64%
+
+- Recall: 99.71%
+
+- F1 Score: 79.89%
+
+**Confusion Matrix**:
 
 [[15390 15297]
- [   88 30562]]
 
-The model showed good performance, especially with recall, as it detected almost all compliant water samples (high recall). However, the precision was slightly lower, meaning it sometimes misclassified non-compliant water as compliant.
+[   88 30562]]
+
+The model showed **good performance**, especially with recall, as it detected almost all compliant water samples (high recall). However, the precision was slightly lower, meaning it sometimes misclassified non-compliant water as compliant.
 
 The features with the highest absolute coefficients (indicating their importance) were:
 
-Chlorine: 1.036
-Turbidity: 1.017
-borough_Manhattan: 0.132902
-borough_Brooklyn: 0.095154
-median_home_value: 0.076015
-median_household_income: 0.073837
+- Chlorine: 1.036
+- Turbidity: 1.017
+- borough_Manhattan: 0.132902
+- borough_Brooklyn: 0.095154
+- median_home_value: 0.076015
+- median_household_income: 0.073837
 
-Borough information (Manhattan, Brooklyn) contributed to the prediction, though less significantly.
+Borough information (**Manhattan, Brooklyn**) contributed to the prediction, though less significantly.
 The coefficients for ecoli, housing_units, and some other features were near zero, suggesting they had little impact on the prediction.
 
-Final Statements:
+**Final Statements**:
+
 - Chlorine and turbidity were the most significant predictors of water quality.
+
 - Boroughs (Manhattan and Brooklyn) had a moderate impact on water quality predictions.
+
 - The model achieved a high recall, making it effective at detecting compliant water, but we can still improve precision by reducing false positives.
 
-In conclusion, our logistic regression model is moderatly good for predicting water quality compliance based on environmental and socio-economic factors in NYC. 
+In **conclusion**, our logistic regression model is moderatly good for predicting water quality compliance based on environmental and socio-economic factors in NYC. 

@@ -147,6 +147,7 @@ window.Quarto = {
   </ul></li>
   </ul></li>
   <li><a href="#main-pipeline" id="toc-main-pipeline" class="nav-link" data-scroll-target="#main-pipeline"><span class="header-section-number">7</span> Main pipeline</a></li>
+  <li><a href="#data-analysis-overall-results" id="toc-data-analysis-overall-results" class="nav-link" data-scroll-target="#data-analysis-overall-results"><span class="header-section-number">8</span> Data Analysis &amp; Overall Results:</a></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="..\Final_Report.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li><li><a href="Final_Report.docx"><i class="bi bi-file-word"></i>MS Word</a></li></ul></div></nav>
 </div>
@@ -183,7 +184,7 @@ window.Quarto = {
 </section>
 <section id="import-data-necessary-packages" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Import Data &amp; Necessary Packages</h1>
-<div id="24306aa5" class="cell" data-execution_count="1">
+<div id="94a8eb74" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -209,7 +210,7 @@ window.Quarto = {
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="3f538c59" class="cell" data-execution_count="2">
+<div id="b961b59d" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(<span class="st">'../data/Drinking_Water_Quality_Distribution_Monitoring_Data_20241116.csv'</span>,</span>
@@ -219,7 +220,7 @@ window.Quarto = {
 </section>
 <section id="data-cleaning" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Data Cleaning</h1>
-<div id="c346732b" class="cell" data-execution_count="3">
+<div id="7d30afcb" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rename columns</span></span>
@@ -232,7 +233,7 @@ window.Quarto = {
 <section id="fixing-date-columns" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="fixing-date-columns"><span class="header-section-number">3.1</span> Fixing date columns</h2>
 <p>The dates from the original dataset are written as strings and divided between two columns, one for the date and one for the time. We merged these two columns to create one column for the date and converted it to a datetime.</p>
-<div id="c48b05ca" class="cell" data-execution_count="4">
+<div id="1b003666" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ensure sample time column is clean</span></span>
@@ -261,7 +262,7 @@ window.Quarto = {
 </div>
 </div>
 <p>We dropped the following columns because they’re unecessary to our investigation or have more than half the data missing.</p>
-<div id="96b60cfd" class="cell" data-execution_count="5">
+<div id="fea7f294" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># drop unecessary columns and rows</span></span>
@@ -269,7 +270,7 @@ window.Quarto = {
 </details>
 </div>
 <p>In the following code, we changed the categorical values for being less than/greater than to numerical values. Furthermore, we ensured that the columns for chlorine, coliform, ecoli, and turbidity were cast as float types.</p>
-<div id="8613f832" class="cell" data-execution_count="6">
+<div id="3461bbed" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># impute non-float values</span></span>
@@ -283,7 +284,7 @@ window.Quarto = {
 </details>
 </div>
 <p>We made sure that there were no invalid values in the following columns based on possible values of ecoli, chlorine, coliform, and turbidity.</p>
-<div id="a2d53695" class="cell" data-execution_count="7">
+<div id="3a696386" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check to make sure all values are possible</span></span>
@@ -293,7 +294,7 @@ window.Quarto = {
 </details>
 </div>
 <p>There were only four remaining missing values, so I dropped the rest.</p>
-<div id="20b55bd8" class="cell" data-execution_count="8">
+<div id="81963f30" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># only 4 missing values total - drop</span></span>
@@ -310,7 +311,7 @@ window.Quarto = {
 <section id="pulling-location-information-from-site-sample-data" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Pulling Location Information from Site Sample Data</h1>
 <p>Using the uszipcode package, we pulled demographic data for each sample site using the site’s zip code, which was obtained from an additional dataset given along with the original data.</p>
-<div id="e719f427" class="cell" data-execution_count="9">
+<div id="b662693f" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in data for sampling sites</span></span>
@@ -345,7 +346,7 @@ window.Quarto = {
 </details>
 </div>
 <p>Since the original goal of this project had been to use a time series model, we sorted the data by sample date and dropped unecessary columns, such as the X and Y - coordinates, since Longitude and Latitude were already included.</p>
-<div id="78df55f4" class="cell" data-execution_count="10">
+<div id="4946e775" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set 'sample_date' as the index and sort by 'sample_date'</span></span>
@@ -375,7 +376,7 @@ window.Quarto = {
 <section id="borough-information" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="borough-information"><span class="header-section-number">4.1</span> Borough Information</h2>
 <p>Using uszipcode again, we added a column for borough that was based off the zip code of the sample site. Furthermore, since some of the boroughs were still missing, these were imputed using KNeighborsClassifier and the latitude and longitude. If major cities were extracted instead, I created a mapping key to change them to their boroughs manually. This resulted in accurate information and we had no null rows!</p>
-<div id="bfc17d18" class="cell" data-execution_count="11">
+<div id="c45d66a6" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> uszipcode <span class="im">import</span> SearchEngine</span>
@@ -489,7 +490,7 @@ window.Quarto = {
 <section id="visualization-of-chemical-levels-by-the-least-and-most-densely-populated-boroughs" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Visualization of Chemical Levels by the Least and Most Densely Populated Boroughs</h1>
 <p>Made sure to apply the threshold levels that indicate maximum level of chemical presence.</p>
-<div id="1630db27" class="cell" data-execution_count="12">
+<div id="50b98c89" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
@@ -573,7 +574,7 @@ window.Quarto = {
 <section id="function-to-preprocess-and-create-the-compliant-target-variable" class="level3" data-number="6.1.1">
 <h3 data-number="6.1.1" class="anchored" data-anchor-id="function-to-preprocess-and-create-the-compliant-target-variable"><span class="header-section-number">6.1.1</span> Function to preprocess and create the ‘compliant’ target variable</h3>
 <p>We created a binary response variable, compliant, indicating whether or not the levels of chlorine, ecoli, turbidity, and coliform are all compliant with national drinking water standards. Ths was created as a binary variable, with <span class="math inline">1</span> indicating compliance and <span class="math inline">0</span> indicating noncompliance.</p>
-<div id="bf21db1d" class="cell" data-execution_count="13">
+<div id="b92c2eb1" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split, GridSearchCV, learning_curve</span>
@@ -596,7 +597,7 @@ window.Quarto = {
 <section id="function-to-resample-the-data-using-smote" class="level3" data-number="6.1.2">
 <h3 data-number="6.1.2" class="anchored" data-anchor-id="function-to-resample-the-data-using-smote"><span class="header-section-number">6.1.2</span> Function to resample the data using SMOTE</h3>
 <p>We had way more instances of compliant water levels therfore we had to resample the minority class with synthetic data.</p>
-<div id="febb6eb2" class="cell" data-execution_count="14">
+<div id="7c70b05f" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> resample_data(X, y):</span>
@@ -609,7 +610,7 @@ window.Quarto = {
 <section id="function-for-hyperparameter-tuning-using-gridsearchcv" class="level3" data-number="6.1.3">
 <h3 data-number="6.1.3" class="anchored" data-anchor-id="function-for-hyperparameter-tuning-using-gridsearchcv"><span class="header-section-number">6.1.3</span> Function for hyperparameter tuning using GridSearchCV</h3>
 <p>Tested to use both l1 and l2 regulization. This helped with penalitizng our features to focus on stronger predictors. We used grid search to find best hyperparameters which we then were able to use as final model.</p>
-<div id="c84d9a3e" class="cell" data-execution_count="15">
+<div id="fe9ecaf7" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> grid_search_tuning(X_train, y_train):</span>
@@ -634,7 +635,7 @@ window.Quarto = {
 <section id="function-to-train-and-evaluate-the-model-using-the-best-parameters-from-gridsearchcv" class="level3" data-number="6.1.4">
 <h3 data-number="6.1.4" class="anchored" data-anchor-id="function-to-train-and-evaluate-the-model-using-the-best-parameters-from-gridsearchcv"><span class="header-section-number">6.1.4</span> Function to train and evaluate the model using the best parameters from GridSearchCV</h3>
 <p>Set our threshold to 0.3 to help with class imbalance. We then fitted our Logistic Regression model using our best parameters. This helped us optimize our model tremendously.</p>
-<div id="7e3cc1b5" class="cell" data-execution_count="16">
+<div id="e10ef909" class="cell" data-execution_count="16">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg, threshold<span class="op">=</span><span class="fl">0.3</span>):</span>
@@ -666,7 +667,7 @@ window.Quarto = {
 <section id="function-to-plot-feature-importance" class="level3" data-number="6.1.5">
 <h3 data-number="6.1.5" class="anchored" data-anchor-id="function-to-plot-feature-importance"><span class="header-section-number">6.1.5</span> Function to plot feature importance</h3>
 <p>Our L1 and L2 regulization helped us pentalize the least significant coefficients to zero therefore we got more accurate results. This showed us that location features slighltly help with predicting water quality.</p>
-<div id="3f5ef54f" class="cell" data-execution_count="17">
+<div id="349cb1bd" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_feature_importance(model, X):</span>
@@ -696,7 +697,7 @@ window.Quarto = {
 <section id="function-to-plot-the-learning-curve" class="level3" data-number="6.1.6">
 <h3 data-number="6.1.6" class="anchored" data-anchor-id="function-to-plot-the-learning-curve"><span class="header-section-number">6.1.6</span> Function to plot the learning curve</h3>
 <p>We wanted to see how our model is training and if its improvng our F1 score. We see from the curve that it is giving us a stable and high f1 score as the models fits more trainintgs.</p>
-<div id="325c1fee" class="cell" data-execution_count="18">
+<div id="a0a308b0" class="cell" data-execution_count="18">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_learning_curve(model, X_train, y_train):</span>
@@ -728,7 +729,7 @@ window.Quarto = {
 <section id="main-pipeline" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Main pipeline</h1>
 <p>Overall methods and variables used.</p>
-<div id="b5877200" class="cell" data-execution_count="19">
+<div id="f42da3f6" class="cell" data-execution_count="19">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># step 1: preprocess data</span></span>
@@ -761,7 +762,7 @@ window.Quarto = {
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Best parameters: {'C': 0.001, 'l1_ratio': 0.9, 'penalty': 'elasticnet', 'solver': 'saga'}
-Best cross-validation score (F1): 0.808366025647234
+Best cross-validation score (F1): 0.8083618986077055
 Accuracy: 0.7491726038117287
 Precision: 0.6664340696482697
 Recall: 0.9971288743882545
@@ -778,16 +779,16 @@ F1 Score: 0.7989125462363905
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                    Feature  Coefficient  Absolute Coefficient
-0                  chlorine     1.036189              1.036189
-1                 turbidity    -1.017118              1.017118
-12        borough_Manhattan    -0.132902              0.132902
-11         borough_Brooklyn     0.095154              0.095154
-8         median_home_value    -0.076015              0.076015
-9   median_household_income    -0.073837              0.073837
-5                  latitude    -0.037572              0.037572
-4                 longitude    -0.032015              0.032015
+0                  chlorine     1.036196              1.036196
+1                 turbidity    -1.017136              1.017136
+12        borough_Manhattan    -0.132911              0.132911
+11         borough_Brooklyn     0.095121              0.095121
+8         median_home_value    -0.075989              0.075989
+9   median_household_income    -0.073856              0.073856
+5                  latitude    -0.037603              0.037603
+4                 longitude    -0.031998              0.031998
 2                  coliform    -0.026138              0.026138
-7    occupied_housing_units     0.014480              0.014480
+7    occupied_housing_units     0.014514              0.014514
 3                     ecoli     0.000000              0.000000
 6             housing_units     0.000000              0.000000
 10            borough_Bronx     0.000000              0.000000
@@ -802,9 +803,49 @@ F1 Score: 0.7989125462363905
 </div>
 </div>
 </div>
+</section>
+<section id="data-analysis-overall-results" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Data Analysis &amp; Overall Results:</h1>
+<p>The <strong>goal</strong> of this project was to analyze factors that affect water quality and predict whether water sampling sites across NYC comply with national standards for drinking water cleanliness. The dataset contains measurements of various bacteria in water samples, and we used logistic regression to predict compliance, with the response variable being a binary classification: compliant (1) or non-compliant (0).</p>
+<p>We began by importing the required libraries and packages necessary for data analysis, including pandas, scikit-learn, imblearn, and visualization libraries like matplotlib.</p>
+<p>In terms of <strong>data cleaning</strong>, we started with fixing date columns. We merged separate date and time columns into a single datetime column for easier analysis. We dropped unnecessary columns. We removed columns with irrelevant information or missing data, ensuring the dataset was clean and ready for analysis.</p>
+<p><strong>Data Type Conversions</strong>: We converted categorical values (less than/greater than) to numerical values and ensured key columns (e.g., chlorine, ecoli, coliform) were cast as float types.</p>
+<p><strong>Handling Missing Data</strong>: After addressing missing values, we ended up with a cleaned dataset of size (148701, 7).</p>
+<p><strong>Pulling Location Information</strong>: Using the uszipcode package, we pulled demographic data based on the zip code of each sample site. We added borough information and imputed missing borough data using K-Nearest Neighbors and geographic coordinates (latitude and longitude).</p>
+<p><strong>Visualization</strong> of Chemical Levels by Borough: We visualized the chemical levels for the least and most densely populated boroughs. We applied the relevant threshold values for chemical concentrations to observe trends in different locations.</p>
+<p><strong>Logistic Regression Modelling</strong>:</p>
+<p>We defined a binary target variable compliant based on water quality standards for chlorine, ecoli, turbidity, and coliform. A value of 1 indicates compliance, and 0 indicates non-compliance. Since the dataset was imbalanced (more compliant than non-compliant samples), we used SMOTE (Synthetic Minority Over-sampling Technique) to generate synthetic data for the minority class (non-compliant) to improve model performance.</p>
+<p>In term of choosing the <strong>hyperpamaters</strong>, we found best hyperparameters from doing a grid search and trained the logistic regression model on the best hyper parameters provided. We set a threshold of 0.3 for classifying non-compliant water. This adjustment helped to deal with the class imbalance and optimized model performance. We analyzed the importance of features in predicting water quality. Regularization (L1 and L2) helped penalize less significant features. The most important features influencing predictions were chlorine levels, turbidity, and the geographical location of the sampling sites (boroughs).</p>
+<p>We plotted the <strong>learning curve</strong> to monitor model performance over increasing training sizes. The curve showed stable and high F1 scores, indicating that the model improved with more data. The pipeline incorporated all the steps, from preprocessing data to model evaluation:</p>
+<p><strong>Best cross-validation score (F1)</strong>: 0.808</p>
+<p>Model Evaluation:</p>
 <ul>
-<li>Data Analysis &amp; Results:</li>
+<li><p>Accuracy: 74.92%</p></li>
+<li><p>Precision: 66.64%</p></li>
+<li><p>Recall: 99.71%</p></li>
+<li><p>F1 Score: 79.89%</p></li>
 </ul>
+<p><strong>Confusion Matrix</strong>:</p>
+<p>[[15390 15297]</p>
+<p>[ 88 30562]]</p>
+<p>The model showed <strong>good performance</strong>, especially with recall, as it detected almost all compliant water samples (high recall). However, the precision was slightly lower, meaning it sometimes misclassified non-compliant water as compliant.</p>
+<p>The features with the highest absolute coefficients (indicating their importance) were:</p>
+<ul>
+<li>Chlorine: 1.036</li>
+<li>Turbidity: 1.017</li>
+<li>borough_Manhattan: 0.132902</li>
+<li>borough_Brooklyn: 0.095154</li>
+<li>median_home_value: 0.076015</li>
+<li>median_household_income: 0.073837</li>
+</ul>
+<p>Borough information (<strong>Manhattan, Brooklyn</strong>) contributed to the prediction, though less significantly. The coefficients for ecoli, housing_units, and some other features were near zero, suggesting they had little impact on the prediction.</p>
+<p><strong>Final Statements</strong>:</p>
+<ul>
+<li><p>Chlorine and turbidity were the most significant predictors of water quality.</p></li>
+<li><p>Boroughs (Manhattan and Brooklyn) had a moderate impact on water quality predictions.</p></li>
+<li><p>The model achieved a high recall, making it effective at detecting compliant water, but we can still improve precision by reducing false positives.</p></li>
+</ul>
+<p>In <strong>conclusion</strong>, our logistic regression model is moderatly good for predicting water quality compliance based on environmental and socio-economic factors in NYC.</p>
 </section>
 
 </main>
