@@ -410,7 +410,6 @@ def resample_data(X, y):
     return X_resampled, y_resampled
 ```
 
-
 ### Function for hyperparameter tuning using GridSearchCV
 Tested to use both l1 and l2 regulization. 
 ```{python}
@@ -436,7 +435,6 @@ def grid_search_tuning(X_train, y_train):
 ### Function to train and evaluate the model using the best parameters from GridSearchCV
 Set our threshold to 0.3 to help with class imbalance.
 ```{python}
-
 def train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg, threshold=0.3):
     # standardize the features
     scaler = StandardScaler()
@@ -545,3 +543,13 @@ plot_feature_importance(best_logreg, X)
 ```
 
 - Data Analysis & Results:
+
+The modelling portion of our project was done using logistic regression. We encoded a binary
+response variable indicating whether or not the sample was compliant with national standards
+for drinking water. Since the resulting variable was so imbalanced, we used SMOTE to oversample
+the underrepresented class. Before fitting the logistic regression model, we used grid search
+to obtain the best parameters. We fit the model with those parameters and evaluated by getting
+predicted probabilities and converting to binary once again based off the probabilities being 
+greater than versus less than $0.5$. Furthermore, we created a confusion matrix and printed the
+accuracy score, recall, precision, and F1 score. The recall was incredibly high, around $0.99$,
+and the accuracy was $0.75$, which suggests the model performed fairly. 
