@@ -14,6 +14,12 @@ format:
       - left=20mm
   docx: default
 ---
+# Objective Statement:
+
+The purpose of this project is to analyze factors affecting water quality as based off of national
+standards. Our dataset contains columns with measurements of various bacteria in water sampling
+sites across NYC. We will perform logistic regression, with the response variable being a binary
+column representing whether the sites are compliant with standards drinking water cleanliness.
 
 # Import Data & Necessary Packages
 
@@ -56,6 +62,10 @@ data.rename(columns = {'Sample Date': 'sample_date', 'Sample Site': 'sample_site
                                       'E.coli(Quanti-Tray) (MPN/100mL)': 'ecoli'}, inplace = True)
 ```
 
+## Fixing date columns
+The dates from the original dataset are written as strings and divided between two columns, one 
+for the date and one for the time. We merged these two columns to create one column for the date
+and converted it to a datetime. 
 ```{python}
 # ensure sample time column is clean
 data.dropna(subset = ['Sample Time'], inplace = True)
@@ -74,11 +84,17 @@ data['turbidity'] = data['turbidity'].apply(lambda x: float(x))
 print(data[['sample_date']].head())
 ```
 
+We dropped the following columns because they're unecessary to our investigation or have more than
+half the data missing.
+
 ```{python}
 # drop unecessary columns and rows
 data.drop(columns = ['Sample Number', 'Fluoride (mg/L)', 'Sample Time'], inplace = True)
 ```
 
+In the following code, we changed the categorical values for being less than/greater than to
+numerical values. Furthermore, we ensured that the columns for chlorine, coliform, ecoli, and
+turbidity were cast as float types.
 ```{python}
 # impute non-float values
 catval = {'<0.10': float(0.09), '<1': float(0.99), '>200.5': float(200.6)}
@@ -90,6 +106,10 @@ data['coliform'] = data['coliform'].astype(float)
 data['ecoli'] = data['ecoli'].astype(float)
 ```
 
+
+We made sure that there were no invalid values in the following columns based on possible values
+of ecoli, chlorine, coliform, and turbidity.
+
 ```{python}
 # check to make sure all values are possible
 data = data[data['chlorine'] > 0]
@@ -97,6 +117,7 @@ data = data[data['coliform'] > 0]
 data = data[data['ecoli'] > 0]
 ```
 
+There were only four remaining missing values, so I dropped the rest.
 ```{python}
 # only 4 missing values total - drop
 data = data.dropna()
@@ -106,6 +127,8 @@ data.shape
 
 # Pulling Location Information from Site Sample Data
 
+Using the uszipcode package, we pulled demographic data for each sample site using the site's zip
+code, which was obtained from an additional dataset given along with the original data.
 ```{python}
 # read in data for sampling sites
 sites = pd.read_csv('../data/sampling_sites_extended.csv')
@@ -138,6 +161,10 @@ sites.rename(columns = {'Sample Site': 'sample_site'}, inplace = True)
 data = pd.merge(data, sites, on = 'sample_site')
 ```
 
+Since the original goal of this project had been to use a time series model, we sorted the data
+by sample date and dropped unecessary columns, such as the X and Y - coordinates, since Longitude
+and Latitude were already included.
+
 ```{python}
 #| eval: false
 # set 'sample_date' as the index and sort by 'sample_date'
@@ -165,7 +192,10 @@ data.to_csv('data/data_merged.csv', index=False)
 ```
 
 ## Borough Information
-We 
+Using uszipcode again, we added a column for borough that was based off the zip code of the sample 
+site. Furthermore, since some of the boroughs were still missing, these were imputed using 
+KNeighborsClassifier and the latitude and longitude. If major cities were extracted instead, I created a mapping key to change them to their boroughs manually. This resulted in accurate information and we had no null rows!
+
 ```{python}
 #| eval: false
 from uszipcode import SearchEngine
@@ -275,7 +305,8 @@ data.to_csv('data/merged_data_with_borough.csv', index=False)
 
 ```
 
-#  Visualization of Chemical Levels by the Least and Most Densely Populated Boroughs
+# Visualization of Chemical Levels by the Least and Most Densely Populated Boroughs
+Made sure to apply the threshold levels that indicate maximum level of chemical presence.
 ```{python}
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -375,6 +406,7 @@ def resample_data(X, y):
 
 
 ### Function for hyperparameter tuning using GridSearchCV
+Tested to use both l1 and l2 regulization. 
 ```{python}
 def grid_search_tuning(X_train, y_train):
     param_grid = {
@@ -396,6 +428,7 @@ def grid_search_tuning(X_train, y_train):
 
 
 ### Function to train and evaluate the model using the best parameters from GridSearchCV
+Set our threshold to 0.3 to help with class imbalance.
 ```{python}
 
 def train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg, threshold=0.3):
@@ -504,3 +537,5 @@ plot_learning_curve(best_logreg, X_train, y_train)
 # step 8: plot feature importance
 plot_feature_importance(best_logreg, X)
 ```
+
+- Data Analysis & Results:
