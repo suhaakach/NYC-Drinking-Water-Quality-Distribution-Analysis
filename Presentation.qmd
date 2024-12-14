@@ -19,14 +19,14 @@ bibliography: ref.bib
 ::: {.incremental}
 - Monitering water quality by different chemical presence over time.
 - Finding areas of concern for water quality in NYC.
-- Predicting future values and presence of different chemicals.
+- Finding predictors of water quality.
 :::
 
 # Data Collection
 ::: {.incremental}
 - “Drinking Water Quality Distribution Monitoring Data” provided by the Department of Environmental Protection (DEP) [@nycopendata2024]. 
 - Data from: 09/01/2024 till 09/30/2024.
-- Tracked variables & chemicals: Chlorine, Turbidity, Fluoride, Coliform, E.coli.
+- Tracked variables: Chlorine, Turbidity, Coliform, E.coli.
 :::
 
 # Data Cleaning
@@ -113,10 +113,23 @@ sites.rename(columns = {'Sample Site': 'sample_site'}, inplace = True)
 data = pd.merge(data, sites, on = 'sample_site')
 ```
 
-# Visulization & Analysis
-::: {.incremental}
+- Created a 'complaint' target variable that indicates safe water quality based on national water quality thresholds. 
+```{python}
+#| echo : true
+def preprocess_data(df):
+    df['compliant'] = (
+        (df['chlorine'] > 0.2) & (df['chlorine'] < 1.0) & 
+        (df['ecoli'] <= 0) & 
+        (df['turbidity'] < 0.3) & 
+        (df['coliform'] < 2.67)
+    ).astype(int)
+    return df
+```
+
+
+#  Visualization of Chemical Levels by the Least and Most Densely Populated Boroughs
 ## {.scrollable}
-### Staten Island vs Brooklyn Levels
+### Staten Island vs Manhattan over time
 ```{python}
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -124,38 +137,45 @@ import pandas as pd
 
 merged_df = pd.read_csv('data/borough.csv')
 
-# define the list of boroughs to plot (only Brooklyn and Staten Island)
-boroughs_to_plot = ['Staten Island', 'Brooklyn']
+# list of boroughs to plot (only Manhattan and Staten Island)
+boroughs_to_plot = ['Staten Island', 'Manhattan']
 
-# set up a figure to hold 6 subplots (3 for each borough)
-fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(15, 15))
+# figure to hold 4 subplots (one for each variable per borough)
+fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(15, 20))
 
 # threshold values for each chemical
 thresholds = {
     'chlorine': 4,  # mg/L
     'turbidity': 0.3,  # NTU
     'coliform': 2.67,  # MPN/100mL
-    'ecoli': 126  # MPN/100mL
+    'ecoli': 0  # MPN/100mL
 }
 
 # loop over each borough and create plots
 for i, borough in enumerate(boroughs_to_plot):
     # filter data for the current borough
     borough_data = merged_df[merged_df['borough'] == borough]
-    
-    # subplot for coliform and E. coli levels (MPN/100mL)
+
+    # plot for Coliform levels (MPN/100mL)
     ax = axes[0, i]  # Top row
     ax.plot(borough_data.index, borough_data['coliform'], label='Coliform (MPN/100mL)', color='green')
-    ax.plot(borough_data.index, borough_data['ecoli'], label='E. coli (MPN/100mL)', color='red')
     ax.axhline(y=thresholds['coliform'], color='green', linestyle='--', label='Max Coliform Threshold (2.67 MPN/100mL)')
-    ax.axhline(y=thresholds['ecoli'], color='red', linestyle='--', label='Max E. coli Threshold (126 MPN/100mL)')
-    ax.set_title(f'Coliform and E. coli Levels for {borough} (MPN/100mL)', fontsize=14)
+    ax.set_title(f'Coliform Levels for {borough} (MPN/100mL)', fontsize=14)
     ax.set_xlabel('Sample Date', fontsize=12)
     ax.set_ylabel('Level', fontsize=12)
     ax.legend(loc='upper right')
 
-    # subplot for turbidity levels (NTU)
-    ax = axes[1, i]  # Middle row
+    # plot for E. coli levels (MPN/100mL)
+    ax = axes[1, i]  # Second row
+    ax.plot(borough_data.index, borough_data['ecoli'], label='E. coli (MPN/100mL)', color='red')
+    ax.axhline(y=thresholds['ecoli'], color='red', linestyle='--', label='Max E. coli Threshold (126 MPN/100mL)')
+    ax.set_title(f'E. coli Levels for {borough} (MPN/100mL)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+    # plot for Turbidity levels (NTU)
+    ax = axes[2, i]  # Third row
     ax.plot(borough_data.index, borough_data['turbidity'], label='Turbidity (NTU)', color='orange')
     ax.axhline(y=thresholds['turbidity'], color='orange', linestyle='--', label='Max Turbidity Threshold (0.3 NTU)')
     ax.set_title(f'Turbidity Levels for {borough} (NTU)', fontsize=14)
@@ -163,8 +183,8 @@ for i, borough in enumerate(boroughs_to_plot):
     ax.set_ylabel('Level', fontsize=12)
     ax.legend(loc='upper right')
 
-    # subplot for chlorine levels (mg/L)
-    ax = axes[2, i]  # Bottom row
+    # plot for Chlorine levels (mg/L)
+    ax = axes[3, i]  # Fourth row
     ax.plot(borough_data.index, borough_data['chlorine'], label='Chlorine (mg/L)', color='blue')
     ax.axhline(y=thresholds['chlorine'], color='blue', linestyle='--', label='Max Chlorine Threshold (4 mg/L)')
     ax.set_title(f'Chlorine Levels for {borough} (mg/L)', fontsize=14)
@@ -172,16 +192,196 @@ for i, borough in enumerate(boroughs_to_plot):
     ax.set_ylabel('Level', fontsize=12)
     ax.legend(loc='upper right')
 
-# adjust layout to avoid overlapping labels
 plt.tight_layout()
 
 plt.show()
-```
 
+```
 
 :::
 
 
+# Finding if Cetain Boroughs Predict Water Quality w/ Logistic Regression.
+
+## {.scrollable}
+### Function to preprocess and create the 'compliant' target variable.
+```{python}
+#| echo : true
+from sklearn.model_selection import train_test_split, GridSearchCV, learning_curve
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+
+def preprocess_data(df):
+    df['compliant'] = (
+        (df['chlorine'] > 0.2) & (df['chlorine'] < 1.0) & 
+        (df['ecoli'] <= 0) & 
+        (df['turbidity'] < 0.3) & 
+        (df['coliform'] < 2.67)
+    ).astype(int)
+    return df
+```
+
+## Function to resample the data using SMOTE
+- This addresses the class imbalance by generating synthetic samples for the minority class (non-compliant), making the dataset more balanced.
+```{python}
+#| echo : true
+def resample_data(X, y):
+    smote = SMOTE(random_state=0)
+    X_resampled, y_resampled = smote.fit_resample(X, y)
+    return X_resampled, y_resampled
+```
+
+# Hyperparameter tuning with GridSearchCV
+## {.scrollable}
+- **Lasso Regularization (L1)** shrinks some coefficients exactly to zero, effectively eliminating features. It works well for feature selection when only a subset of features are important.
+
+- **Ridge Regularization (L2)** shrinks coefficients towards zero but doesn't eliminate them. It works well when all features are expected to contribute to the prediction.
+```{python}
+#| echo : true
+def grid_search_tuning(X_train, y_train):
+    param_grid = {
+        'C': [0.001, 0.01, 0.1, 1, 10], # regularization strength
+        'penalty': ['elasticnet'], # combination of both L1 (Lasso) and L2 (Ridge).
+        'l1_ratio': [0.1, 0.5, 0.9],  # ratio between L1 and L2 (0 = L2, 1 = L1)
+        'solver': ['saga']
+    }
+
+    logreg = LogisticRegression(max_iter=1000)
+    grid_search = GridSearchCV(logreg, param_grid, cv=5, scoring='f1', n_jobs=-1) # evaluation metric
+    grid_search.fit(X_train, y_train)
+
+    print(f"Best parameters: {grid_search.best_params_}")
+    print(f"Best cross-validation score (F1): {grid_search.best_score_}")
+
+    return grid_search.best_estimator_
+```
+
+# Function to Train and Evaluate the Model Using the Best Parameters from GridSearchCV
+## {.scrollable}
+- A 0.3 threshold to find predictions with probabilities above 0.3 which will be classified as 1 (compliant), and below will be 0 (non-compliant).
+- Standardized the features by removing the mean and scaling to unit variance. This is important for our model since it is sensitive to the scale of the features.
+```{python}
+#| echo : true
+def train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg, threshold=0.3):
+    # standardize the features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # fit the model with the best parameters
+    best_logreg.fit(X_train_scaled, y_train)
+
+    # get predicted probabilities and adjust threshold
+    y_pred_prob = best_logreg.predict_proba(X_test_scaled)[:, 1]
+    y_pred_adjusted = (y_pred_prob > threshold).astype(int)
+
+    # evaluation metrics
+    print('Accuracy:', accuracy_score(y_test, y_pred_adjusted))
+    print('Precision:', precision_score(y_test, y_pred_adjusted))
+    print('Recall:', recall_score(y_test, y_pred_adjusted))
+    print('F1 Score:', f1_score(y_test, y_pred_adjusted))
+
+    cm = confusion_matrix(y_test, y_pred_adjusted)
+    print(cm)
+
+    return best_logreg
+```
+
+### Cross Validation
+```{python}
+#| echo : true
+def plot_learning_curve(model, X_train, y_train):
+    train_sizes, train_scores, test_scores = learning_curve(
+        model, X_train, y_train, cv=5, n_jobs=-1,
+        train_sizes=np.linspace(0.1, 1.0, 10), scoring='f1')
+
+    # calculate the mean and standard deviation for plotting
+    train_mean = train_scores.mean(axis=1)
+    train_std = train_scores.std(axis=1)
+    test_mean = test_scores.mean(axis=1)
+    test_std = test_scores.std(axis=1)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(train_sizes, train_mean, color='blue', label='Training score')
+    plt.plot(train_sizes, test_mean, color='red', label='Cross-validation score')
+    plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, alpha=0.1, color='blue')
+    plt.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, alpha=0.1, color='red')
+    plt.title("Learning Curve (Logistic Regression)")
+    plt.xlabel("Number of Training Samples")
+    plt.ylabel("F1 Score")
+    plt.legend(loc="best")
+    plt.show()
+
+```
+
+# Results After Cross Validation
+## {.scrollable}
+```{python}
+def plot_feature_importance(model, X):
+    coefficients = model.coef_[0]
+    feature_names = X.columns
+
+    feature_importance_df = pd.DataFrame({
+        'Feature': feature_names,
+        'Coefficient': coefficients,
+        'Absolute Coefficient': abs(coefficients)
+    })
+    
+    feature_importance_df = feature_importance_df.sort_values(by='Absolute Coefficient', ascending=False)
+
+    # feature importance
+    print(feature_importance_df)
+
+    plt.figure(figsize=(10, 6))
+    plt.barh(feature_importance_df['Feature'], feature_importance_df['Absolute Coefficient'], color='skyblue')
+    plt.xlabel('Absolute Coefficient')
+    plt.title('Feature Importance (Logistic Regression)')
+    plt.gca().invert_yaxis()  # Invert y-axis to show the most important features at the top
+    plt.show()
+```
+
+```{python}
+# step 1: preprocess data
+merged_df = preprocess_data(merged_df)
+
+# step 2: get dummy variables
+model_data = pd.get_dummies(merged_df, dtype=int)
+model_data.drop(columns=['zip code'], inplace=True)
+
+X = model_data.drop(columns=['compliant'])
+y = model_data['compliant']
+
+# step 3: resample data
+X_resampled, y_resampled = resample_data(X, y)
+
+# step 4: split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25, random_state=4188)
+
+# step 5: perform gridsearchcv to find the best hyperparameters
+best_logreg = grid_search_tuning(X_train, y_train)
+
+# step 6: train and evaluate the logistic regression model with the best hyperparameters
+best_logreg = train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg)
+
+# step 7: plot the learning curve
+plot_learning_curve(best_logreg, X_train, y_train)
+
+# step 8: plot feature importance
+plot_feature_importance(best_logreg, X)
+```
+
+# Analysis & Conclusion
+::: {.incremental}
+## {.scrollable}
+- The model has a accuracy of 75% and very high recall (99.7%), meaning it is excellent at detecting compliance. However, this comes at the cost of a lower precision (66.6%), which means the model over-predicts compliance, classifying too many non-compliant instances as compliant.
+- The F1 score is good (80.8%), reflecting a balance between precision and recall.
+- The model’s performance metrics indicate it is particularly good at identifying the positive class (compliant), but it could be improved in reducing false positives.
+- Feature importance indicates that boroughs along with household income, value and occupied units do have a positive indication of water compliance even though they aren't strong. 
+:::
+
+# Thank You!
 
 # References
 ::: {#refs}
