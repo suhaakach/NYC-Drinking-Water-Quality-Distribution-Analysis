@@ -1,0 +1,100 @@
+
+# Modelling
+
+```{python}
+def check_stationarity(series):
+    '''Check stationarity of column using Augmented Dickey-Fuller test'''
+    result = adfuller(series)
+    print(f'ADF Statistic: {result[0]}')
+    print(f'p-value: {result[1]}')
+    if result[1] <= 0.05:
+        print('The series is stationary.')
+        print()
+    else:
+        print('The series is not stationary.')
+        print()
+
+# check stationarities
+for col in ['chlorine', 'turbidity', 'coliform', 'ecoli']:
+    print(f'Checking stationarity for {col}')
+    check_stationarity(data[col])
+```
+
+```{python}
+# split into training and testing
+train_size = int(len(data) * 0.7)
+
+data_train = data[:train_size]
+data_test = data[train_size:]
+```
+
+```{python}
+model = VAR(data_train)
+```
+
+```{python}
+lag_results = {}
+
+# iterate through range of possible lags
+for i in range(1, 31):
+  result = model.fit(i)
+  lag_results[i] = {
+    'AIC': result.aic,
+    'BIC': result.bic,
+    'HQIC': result.hqic,
+    }
+
+# find best lag by metric
+best_aic = min(lag_results, key = lambda x: lag_results[x]['AIC'])
+best_bic = min(lag_results, key = lambda x: lag_results[x]['BIC'])
+best_hqic = min(lag_results, key = lambda x: lag_results[x]['HQIC'])
+
+print(f'Best lag by AIC: {best_aic}')
+print(f'Best lag by BIC: {best_bic}')
+print(f'Best lag by HQIC: {best_hqic}')
+```
+
+```{python}
+lags = list(lag_results.keys())
+aic_values = [lag_results[lag]['AIC'] for lag in lags]
+bic_values = [lag_results[lag]['BIC'] for lag in lags]
+hqic_values = [lag_results[lag]['HQIC'] for lag in lags]
+
+# plot AIC, BIC, and HQIC for range of lags
+plt.plot(lags, aic_values, label='AIC', marker='o')
+plt.plot(lags, bic_values, label='BIC', marker='o')
+plt.plot(lags, hqic_values, label='HQIC', marker='o')
+plt.xlabel('Lag Order')
+plt.ylabel('Information Criterion')
+plt.title('Lag Order Selection (Custom Range)')
+plt.legend()
+plt.show()
+```
+
+```{python}
+# fit model
+results = model.fit(maxlags = 27)
+
+# create predictions
+forecast_input = data_train.values[-results.k_ar:]
+forecast = results.forecast(forecast_input, steps = len(data_test))
+forecast_df = pd.DataFrame(forecast, index = data_test.index, 
+                                        columns = data_test.columns)
+```
+
+```{python}
+mae = mean_absolute_error(data_test, forecast_df)
+rmse = mean_squared_error(data_test, forecast_df, squared = False)
+
+print(f'MAE: {mae}')
+print(f'RMSE: {rmse}')
+```
+
+```{python}
+for col in data_test.columns:
+  actual = data_test[col]
+  pred = forecast_df[col]
+
+  print(f'R-squared for {col} on test set: {r2_score(actual, pred):.4f}')
+```
+

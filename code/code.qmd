@@ -21,24 +21,21 @@ format:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
 from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics import (mean_absolute_error, mean_squared_error,
                                                             r2_score)
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from uszipcode import SearchEngine
-from sklearn.ensemble import RandomForestClassifier
 import seaborn as sns
 from pysal.lib import weights
 from pysal.model import spreg
 import gmplot
 import warnings
-from imblearn.over_sampling import RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
 from collections import Counter
 import seaborn as sns
 warnings.filterwarnings("ignore")
@@ -107,6 +104,8 @@ data = data.dropna()
 data.shape
 ```
 
+# Pulling Location Information from Site Sample Data
+
 ```{python}
 # read in data for sampling sites
 sites = pd.read_csv('../data/sampling_sites_extended.csv')
@@ -140,6 +139,7 @@ data = pd.merge(data, sites, on = 'sample_site')
 ```
 
 ```{python}
+#| eval: false
 # set 'sample_date' as the index and sort by 'sample_date'
 data = data.set_index('sample_date')
 data = data.sort_values(by='sample_date')
@@ -161,12 +161,13 @@ columns_to_scale = [col for col in data.columns if col not in location_columns]
 data[columns_to_scale] = (data[columns_to_scale] - data[columns_to_scale].mean()) / data[columns_to_scale].std()
 
 # save cleaned and merged data to new file
-data.to_csv('../data/data_merged.csv', index=False)
+data.to_csv('data/data_merged.csv', index=False)
 ```
 
-## Borough information
+## Borough Information
 
 ```{python}
+#| eval: false
 from uszipcode import SearchEngine
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
@@ -221,137 +222,237 @@ data.loc[data['borough'].isnull(), 'borough'] = predicted_boroughs
 # check for remaining missing borough values
 print(f'Missing boroughs after imputation: {data["borough"].isnull().sum()}')
 
-# Save the updated data with borough names
-data.to_csv('../data/merged_data_with_borough.csv', index=False)
+# save the updated data with borough names
+data.to_csv('data/merged_data_with_borough.csv', index=False)
 
 ```
 
-# Visualization
+#  Visualization of Chemical Levels by the Least and Most Densely Populated Boroughs
 ```{python}
 import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
 
-# load your data
-merged_df = pd.read_csv('../data/merged_data_with_borough.csv')
+merged_df = pd.read_csv('../data/borough.csv')
 
-# define the list of boroughs to plot
-boroughs_to_plot = ['Brooklyn', 'Bronx', 'Staten Island']
+# list of boroughs to plot (only Manhattan and Staten Island)
+boroughs_to_plot = ['Staten Island', 'Manhattan']
 
-# set up a figure to hold multiple subplots (3 boroughs)
-fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(10, 15))
+# figure to hold 4 subplots (one for each variable per borough)
+fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(15, 20))
 
-# loop over each borough and create a plot
+# threshold values for each chemical
+thresholds = {
+    'chlorine': 4,  # mg/L
+    'turbidity': 0.3,  # NTU
+    'coliform': 2.67,  # MPN/100mL
+    'ecoli': 0  # MPN/100mL
+}
+
+# loop over each borough and create plots
 for i, borough in enumerate(boroughs_to_plot):
     # filter data for the current borough
     borough_data = merged_df[merged_df['borough'] == borough]
-    
-    # plotting the data for this borough
-    axes[i].plot(borough_data.index, borough_data['chlorine'], label='Chlorine (mg/L)', color='blue')
-    axes[i].plot(borough_data.index, borough_data['turbidity'], label='Turbidity (NTU)', color = 'orange')
-    axes[i].plot(borough_data.index, borough_data['coliform'], label='Coliform (MPN/100mL)', color = 'green')
-    axes[i].plot(borough_data.index, borough_data['ecoli'], label='E. coli (MPN/100mL)', color='red')
-    
-    # set labels and title for each subplot
-    axes[i].set_title(f'Water Quality Levels for {borough}', fontsize=14)
-    axes[i].set_xlabel('Sample Date', fontsize=12)
-    axes[i].set_ylabel('Level', fontsize=12)
-    axes[i].legend(loc='upper right')
 
-# adjust layout to avoid overlapping labels
+    # plot for Coliform levels (MPN/100mL)
+    ax = axes[0, i]  # Top row
+    ax.plot(borough_data.index, borough_data['coliform'], label='Coliform (MPN/100mL)', color='green')
+    ax.axhline(y=thresholds['coliform'], color='green', linestyle='--', label='Max Coliform Threshold (2.67 MPN/100mL)')
+    ax.set_title(f'Coliform Levels for {borough} (MPN/100mL)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+    # plot for E. coli levels (MPN/100mL)
+    ax = axes[1, i]  # Second row
+    ax.plot(borough_data.index, borough_data['ecoli'], label='E. coli (MPN/100mL)', color='red')
+    ax.axhline(y=thresholds['ecoli'], color='red', linestyle='--', label='Max E. coli Threshold (126 MPN/100mL)')
+    ax.set_title(f'E. coli Levels for {borough} (MPN/100mL)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+    # plot for Turbidity levels (NTU)
+    ax = axes[2, i]  # Third row
+    ax.plot(borough_data.index, borough_data['turbidity'], label='Turbidity (NTU)', color='orange')
+    ax.axhline(y=thresholds['turbidity'], color='orange', linestyle='--', label='Max Turbidity Threshold (0.3 NTU)')
+    ax.set_title(f'Turbidity Levels for {borough} (NTU)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+    # plot for Chlorine levels (mg/L)
+    ax = axes[3, i]  # Fourth row
+    ax.plot(borough_data.index, borough_data['chlorine'], label='Chlorine (mg/L)', color='blue')
+    ax.axhline(y=thresholds['chlorine'], color='blue', linestyle='--', label='Max Chlorine Threshold (4 mg/L)')
+    ax.set_title(f'Chlorine Levels for {borough} (mg/L)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
 plt.tight_layout()
 
 plt.show()
+
 ```
 
-# Modelling 
+# Logistic Regression Modelling 
 
-## Encoding Response Variable 
-
+## Analyzing how boroughs predict water quality
+### Function to preprocess and create the 'compliant' target variable
 ```{python}
-# create response variable based off national standards
-merged_df['compliant'] = (
-  (merged_df['chlorine'] < 4) & (merged_df['ecoli'] < 0) & (
-    merged_df['turbidity'] < 1) & (merged_df['coliform'] < 0)
-).astype(int)
+from sklearn.model_selection import train_test_split, GridSearchCV, learning_curve
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
-merged_df['compliant'].value_counts()
+def preprocess_data(df):
+    df['compliant'] = (
+        (df['chlorine'] > 0.2) & (df['chlorine'] < 1.0) & 
+        (df['ecoli'] <= 0) & 
+        (df['turbidity'] < 0.3) & 
+        (df['coliform'] < 2.67)
+    ).astype(int)
+    return df
 ```
 
+### Function to resample the data using SMOTE
 ```{python}
-# get dummy variables
-model_data = pd.get_dummies(merged_df, dtype = int)
+def resample_data(X, y):
+    smote = SMOTE(random_state=0)
+    X_resampled, y_resampled = smote.fit_resample(X, y)
+    return X_resampled, y_resampled
+```
 
-model_data.drop(columns = ['borough_Bronx', 'zip code', 'latitude', 'longitude'], 
-                                                                  inplace = True)
 
-# split into training and testing
-X = model_data.drop(columns = ['compliant'])
+### Function for hyperparameter tuning using GridSearchCV
+```{python}
+def grid_search_tuning(X_train, y_train):
+    param_grid = {
+        'C': [0.001, 0.01, 0.1, 1, 10],
+        'penalty': ['elasticnet'],
+        'l1_ratio': [0.1, 0.5, 0.9],  # ratio between L1 and L2 (0 = L2, 1 = L1)
+        'solver': ['saga']
+    }
+
+    logreg = LogisticRegression(max_iter=1000)
+    grid_search = GridSearchCV(logreg, param_grid, cv=5, scoring='f1', n_jobs=-1)
+    grid_search.fit(X_train, y_train)
+
+    print(f"Best parameters: {grid_search.best_params_}")
+    print(f"Best cross-validation score (F1): {grid_search.best_score_}")
+
+    return grid_search.best_estimator_
+```
+
+
+### Function to train and evaluate the model using the best parameters from GridSearchCV
+```{python}
+
+def train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg, threshold=0.3):
+    # standardize the features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # fit the Logistic Regression model with the best parameters
+    best_logreg.fit(X_train_scaled, y_train)
+
+    # get predicted probabilities and adjust threshold
+    y_pred_prob = best_logreg.predict_proba(X_test_scaled)[:, 1]
+    y_pred_adjusted = (y_pred_prob > threshold).astype(int)
+
+    # evaluation metrics
+    print('Accuracy:', accuracy_score(y_test, y_pred_adjusted))
+    print('Precision:', precision_score(y_test, y_pred_adjusted))
+    print('Recall:', recall_score(y_test, y_pred_adjusted))
+    print('F1 Score:', f1_score(y_test, y_pred_adjusted))
+
+    cm = confusion_matrix(y_test, y_pred_adjusted)
+    print(cm)
+
+    return best_logreg
+```
+
+### Function to plot feature importance
+```{python}
+def plot_feature_importance(model, X):
+    coefficients = model.coef_[0]
+    feature_names = X.columns
+
+    feature_importance_df = pd.DataFrame({
+        'Feature': feature_names,
+        'Coefficient': coefficients,
+        'Absolute Coefficient': abs(coefficients)
+    })
+    
+    feature_importance_df = feature_importance_df.sort_values(by='Absolute Coefficient', ascending=False)
+
+    # feature importance
+    print(feature_importance_df)
+
+    plt.figure(figsize=(10, 6))
+    plt.barh(feature_importance_df['Feature'], feature_importance_df['Absolute Coefficient'], color='skyblue')
+    plt.xlabel('Absolute Coefficient')
+    plt.title('Feature Importance (Logistic Regression)')
+    plt.gca().invert_yaxis()  # Invert y-axis to show the most important features at the top
+    plt.show()
+```
+
+### Function to plot the learning curve
+```{python}
+def plot_learning_curve(model, X_train, y_train):
+    train_sizes, train_scores, test_scores = learning_curve(
+        model, X_train, y_train, cv=5, n_jobs=-1,
+        train_sizes=np.linspace(0.1, 1.0, 10), scoring='f1')
+
+    # calculate the mean and standard deviation for plotting
+    train_mean = train_scores.mean(axis=1)
+    train_std = train_scores.std(axis=1)
+    test_mean = test_scores.mean(axis=1)
+    test_std = test_scores.std(axis=1)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(train_sizes, train_mean, color='blue', label='Training score')
+    plt.plot(train_sizes, test_mean, color='red', label='Cross-validation score')
+    plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, alpha=0.1, color='blue')
+    plt.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, alpha=0.1, color='red')
+    plt.title("Learning Curve (Logistic Regression)")
+    plt.xlabel("Number of Training Samples")
+    plt.ylabel("F1 Score")
+    plt.legend(loc="best")
+    plt.show()
+
+```
+
+# Main pipeline
+```{python}
+# step 1: preprocess data
+merged_df = preprocess_data(merged_df)
+
+# step 2: get dummy variables
+model_data = pd.get_dummies(merged_df, dtype=int)
+model_data.drop(columns=['zip code'], inplace=True)
+
+X = model_data.drop(columns=['compliant'])
 y = model_data['compliant']
 
-# undersample
-rus = RandomOverSampler(random_state = 0)
-X, y = rus.fit_resample(X, y)
+# step 3: resample data
+X_resampled, y_resampled = resample_data(X, y)
 
-model_data = pd.concat([X, y], axis = 1)
+# step 4: split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25, random_state=4188)
 
-model_data['compliant'].value_counts()
-```
+# step 5: perform gridsearchcv to find the best hyperparameters
+best_logreg = grid_search_tuning(X_train, y_train)
 
-## Model Fitting & Evaluation
+# step 6: train and evaluate the logistic regression model with the best hyperparameters
+best_logreg = train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg)
 
-```{python}
-# scale data
-scaler = StandardScaler()
-X = scaler.fit_transform(X)
+# step 7: plot the learning curve
+plot_learning_curve(best_logreg, X_train, y_train)
 
-# apply PCA to handle multicollinearity
-pca = PCA(n_components = 2)
-X = pca.fit_transform(X)
-
-# split into training and testing
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state = 0)
-```
-
-```{python}
-param_grid = {
-    'n_estimators': [1, 2, 5, 10], 
-    'max_depth': [None, 5, 8, 10],   
-    'min_samples_split': [2, 5, 10],      
-    'min_samples_leaf': [1, 2, 4],        
-    'max_features': ['sqrt', 'log2']      
-}
-
-rf = RandomForestClassifier(random_state = 0)
-
-# perform grid search
-grid_search = GridSearchCV(estimator = rf, param_grid = param_grid, scoring = 'accuracy',
-                                                                      cv = 5, n_jobs = -1)
-
-grid_search.fit(X_train, y_train)
-best_rf = grid_search.best_estimator_
-
-y_pred_rf = best_rf.predict(X_test)
-
-# evaluate
-print('Accuracy:', accuracy_score(y_test, y_pred_rf))
-print('Precision:', precision_score(y_test, y_pred_rf))
-print('Recall:', recall_score(y_test, y_pred_rf))
-print('F1 Score:', f1_score(y_test, y_pred_rf))
-```
-
-```{python}
-importances = best_rf.feature_importances_
-components = pca.components_
-feature_names = model_data.drop(columns = ['compliant']).columns
-
-# contribution of each feature to each principal component
-contributions = pd.DataFrame(components, columns = feature_names, 
-                              index=[f'PC{i+1}' for i in range(components.shape[0])])
-
-# get feature importances and sort
-feature_contributions = importances.dot(components)
-feature_importance_df = pd.DataFrame(feature_contributions, index = feature_names, 
-                                                            columns = ['Importance'])
-feature_importance_df = feature_importance_df.sort_values(by = 'Importance', ascending=False)
-
-feature_importance_df
+# step 8: plot feature importance
+plot_feature_importance(best_logreg, X)
 ```

@@ -116,6 +116,67 @@ data = pd.merge(data, sites, on = 'sample_site')
 # Visulization & Analysis
 ::: {.incremental}
 ## {.scrollable}
+### Staten Island vs Brooklyn Levels
+```{python}
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+
+merged_df = pd.read_csv('data/borough.csv')
+
+# define the list of boroughs to plot (only Brooklyn and Staten Island)
+boroughs_to_plot = ['Staten Island', 'Brooklyn']
+
+# set up a figure to hold 6 subplots (3 for each borough)
+fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(15, 15))
+
+# threshold values for each chemical
+thresholds = {
+    'chlorine': 4,  # mg/L
+    'turbidity': 0.3,  # NTU
+    'coliform': 2.67,  # MPN/100mL
+    'ecoli': 126  # MPN/100mL
+}
+
+# loop over each borough and create plots
+for i, borough in enumerate(boroughs_to_plot):
+    # filter data for the current borough
+    borough_data = merged_df[merged_df['borough'] == borough]
+    
+    # subplot for coliform and E. coli levels (MPN/100mL)
+    ax = axes[0, i]  # Top row
+    ax.plot(borough_data.index, borough_data['coliform'], label='Coliform (MPN/100mL)', color='green')
+    ax.plot(borough_data.index, borough_data['ecoli'], label='E. coli (MPN/100mL)', color='red')
+    ax.axhline(y=thresholds['coliform'], color='green', linestyle='--', label='Max Coliform Threshold (2.67 MPN/100mL)')
+    ax.axhline(y=thresholds['ecoli'], color='red', linestyle='--', label='Max E. coli Threshold (126 MPN/100mL)')
+    ax.set_title(f'Coliform and E. coli Levels for {borough} (MPN/100mL)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+    # subplot for turbidity levels (NTU)
+    ax = axes[1, i]  # Middle row
+    ax.plot(borough_data.index, borough_data['turbidity'], label='Turbidity (NTU)', color='orange')
+    ax.axhline(y=thresholds['turbidity'], color='orange', linestyle='--', label='Max Turbidity Threshold (0.3 NTU)')
+    ax.set_title(f'Turbidity Levels for {borough} (NTU)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+    # subplot for chlorine levels (mg/L)
+    ax = axes[2, i]  # Bottom row
+    ax.plot(borough_data.index, borough_data['chlorine'], label='Chlorine (mg/L)', color='blue')
+    ax.axhline(y=thresholds['chlorine'], color='blue', linestyle='--', label='Max Chlorine Threshold (4 mg/L)')
+    ax.set_title(f'Chlorine Levels for {borough} (mg/L)', fontsize=14)
+    ax.set_xlabel('Sample Date', fontsize=12)
+    ax.set_ylabel('Level', fontsize=12)
+    ax.legend(loc='upper right')
+
+# adjust layout to avoid overlapping labels
+plt.tight_layout()
+
+plt.show()
+```
 
 
 :::
