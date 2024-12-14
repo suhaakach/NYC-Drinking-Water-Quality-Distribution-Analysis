@@ -379,6 +379,12 @@ plt.show()
 
 ## Analyzing how boroughs predict water quality
 ### Function to preprocess and create the 'compliant' target variable
+
+We created a binary response variable, compliant, indicating whether or not the levels
+of chlorine, ecoli, turbidity, and coliform are all compliant with national drinking
+water standards. Ths was created as a binary variable, with $1$ indicating compliance and
+$0$ indicating noncompliance.
+
 ```{python}
 from sklearn.model_selection import train_test_split, GridSearchCV, learning_curve
 from sklearn.preprocessing import StandardScaler
