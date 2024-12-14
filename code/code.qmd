@@ -186,7 +186,7 @@ columns_to_scale = [col for col in data.columns if col not in location_columns]
 data[columns_to_scale] = (data[columns_to_scale] - data[columns_to_scale].mean()) / data[columns_to_scale].std()
 
 # save cleaned and merged data to new file
-#data.to_csv('data/data_merged.csv', index=False)
+data.to_csv('data/data_merged.csv', index=False)
 
 data.tail()
 ```
