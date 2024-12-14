@@ -32,7 +32,7 @@ bibliography: ref.bib
 # Data Cleaning
 ## {.scrollable}
 - Dropped and cleaned columns using Pandas.
-    - Unecessary columns: Sample Number, Fluoride (mg/L), Sample Time.
+    - Unnecessary columns: Sample Number, Fluoride (mg/L), Sample Time.
 - Improved column readability.
 - Standardized format of our sample time column.
 - Fixed column data types.

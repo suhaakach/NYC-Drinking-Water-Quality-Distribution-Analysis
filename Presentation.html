@@ -427,7 +427,7 @@ Isabelle Perez &amp; Suha Akach
 <h1>Objectives</h1>
 <div>
 <ul>
-<li class="fragment">Monitering water quality by different chemical presence over time.</li>
+<li class="fragment">Monitoring water quality by different chemical presence over time.</li>
 <li class="fragment">Finding areas of concern for water quality in NYC.</li>
 <li class="fragment">Finding predictors of water quality.</li>
 </ul>
@@ -439,7 +439,7 @@ Isabelle Perez &amp; Suha Akach
 <div>
 <ul>
 <li class="fragment">“Drinking Water Quality Distribution Monitoring Data” provided by the Department of Environmental Protection (DEP) <span class="citation" data-cites="nycopendata2024">(<a href="#/references" role="doc-biblioref" onclick="">Data 2024</a>)</span>.</li>
-<li class="fragment">Data from: 09/01/2024 till 09/30/2024.</li>
+<li class="fragment">Data from: 01/01/2015 till 09/30/2024.</li>
 <li class="fragment">Tracked variables: Chlorine, Turbidity, Coliform, E.coli.</li>
 </ul>
 </div>
@@ -455,10 +455,10 @@ Isabelle Perez &amp; Suha Akach
 <ul>
 <li>Dropped and cleaned columns using Pandas.
 <ul>
-<li>Unessasary columns: Sample Number, Fluoride (mg/L), Sample Time.</li>
+<li>Unnecessary columns: Sample Number, Fluoride (mg/L), Sample Time.</li>
 </ul></li>
-<li>Improved column readibilty.</li>
-<li>Strandized format of our sample time column.</li>
+<li>Improved column readability.</li>
+<li>Standardized format of our sample time column.</li>
 <li>Fixed column data types.</li>
 </ul>
 <div id="6d943a9d" class="cell" data-execution_count="3">
@@ -630,7 +630,7 @@ Isabelle Perez &amp; Suha Akach
 <section id="section-5" class="slide level2 scrollable">
 <h2></h2>
 <ul>
-<li>A 0.3 threshold to find predictions with probabilities above 0.3 which will be classified as 1 (compliant), and below will be 0 (non-compliant).</li>
+<li>A <span class="math inline">\(0.3\)</span> threshold to find predictions with probabilities above <span class="math inline">\(0.3\)</span> which will be classified as <span class="math inline">\(1\)</span> (compliant), and below will be <span class="math inline">\(0\)</span> (non-compliant).</li>
 <li>Standardized the features by removing the mean and scaling to unit variance. This is important for our model since it is sensitive to the scale of the features.</li>
 </ul>
 <div id="7094c30c" class="cell" data-execution_count="10">
@@ -743,8 +743,8 @@ F1 Score: 0.7989125462363905
 <section id="section-7" class="slide level2 scrollable incremental">
 <h2></h2>
 <ul>
-<li>The model has a accuracy of 75% and very high recall (99.7%), meaning it is excellent at detecting compliance. However, this comes at the cost of a lower precision (66.6%), which means the model over-predicts compliance, classifying too many non-compliant instances as compliant.</li>
-<li>The F1 score is good (80.8%), reflecting a balance between precision and recall.</li>
+<li>The model has an accuracy of <span class="math inline">\(75\)</span>% and very high recall (<span class="math inline">\(99.7\)</span>%), meaning it is excellent at detecting compliance. However, this comes at the cost of a lower precision (<span class="math inline">\(66.6\)</span>%), which means the model over-predicts compliance, classifying too many non-compliant instances as compliant.</li>
+<li>The F1 score is good (<span class="math inline">\(80.8\)</span>%), reflecting a balance between precision and recall.</li>
 <li>The model’s performance metrics indicate it is particularly good at identifying the positive class (compliant), but it could be improved in reducing false positives.</li>
 <li>Feature importance indicates that boroughs along with household income, value and occupied units do have a positive indication of water compliance even though they aren’t strong.</li>
 </ul>
