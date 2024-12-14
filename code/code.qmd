@@ -15,6 +15,11 @@ format:
   docx: default
 ---
 
+The purpose of this project is to analyze factors affecting water quality as based off of national
+standards. Our dataset contains columns with measurements of various bacteria in water sampling
+sites across NYC. We will perform logistic regression, with the response variable being a binary
+column representing whether the sites are compliant with standards drinking water cleanliness.
+
 # Import Data & Necessary Packages
 
 ```{python}
