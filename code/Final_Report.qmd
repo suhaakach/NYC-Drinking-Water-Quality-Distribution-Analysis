@@ -403,6 +403,7 @@ def preprocess_data(df):
 ```
 
 ### Function to resample the data using SMOTE
+We had way more instances of compliant water levels therfore we had to resample the minority class with synthetic data. 
 ```{python}
 def resample_data(X, y):
     smote = SMOTE(random_state=0)
@@ -410,8 +411,9 @@ def resample_data(X, y):
     return X_resampled, y_resampled
 ```
 
+
 ### Function for hyperparameter tuning using GridSearchCV
-Tested to use both l1 and l2 regulization. 
+Tested to use both l1 and l2 regulization. This helped with penalitizng our features to focus on stronger predictors. We used grid search to find best hyperparameters which we then were able to use as final model. 
 ```{python}
 def grid_search_tuning(X_train, y_train):
     param_grid = {
@@ -433,8 +435,9 @@ def grid_search_tuning(X_train, y_train):
 
 
 ### Function to train and evaluate the model using the best parameters from GridSearchCV
-Set our threshold to 0.3 to help with class imbalance.
+Set our threshold to 0.3 to help with class imbalance. We then fitted our Logistic Regression model using our best parameters. This helped us optimize our model tremendously. 
 ```{python}
+
 def train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg, threshold=0.3):
     # standardize the features
     scaler = StandardScaler()
@@ -461,6 +464,7 @@ def train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg, thre
 ```
 
 ### Function to plot feature importance
+Our L1 and L2 regulization helped us pentalize the least significant coefficients to zero therefore we got more accurate results. This showed us that location features slighltly help with predicting water quality. 
 ```{python}
 def plot_feature_importance(model, X):
     coefficients = model.coef_[0]
@@ -486,6 +490,7 @@ def plot_feature_importance(model, X):
 ```
 
 ### Function to plot the learning curve
+We wanted to see how our model is training and if its improvng our F1 score. We see from the curve that it is giving us a stable and high f1 score as the models fits more trainintgs.
 ```{python}
 def plot_learning_curve(model, X_train, y_train):
     train_sizes, train_scores, test_scores = learning_curve(
@@ -512,6 +517,7 @@ def plot_learning_curve(model, X_train, y_train):
 ```
 
 # Main pipeline
+Overall methods and variables used.
 ```{python}
 # step 1: preprocess data
 merged_df = preprocess_data(merged_df)
@@ -543,13 +549,3 @@ plot_feature_importance(best_logreg, X)
 ```
 
 - Data Analysis & Results:
-
-The modelling portion of our project was done using logistic regression. We encoded a binary
-response variable indicating whether or not the sample was compliant with national standards
-for drinking water. Since the resulting variable was so imbalanced, we used SMOTE to oversample
-the underrepresented class. Before fitting the logistic regression model, we used grid search
-to obtain the best parameters. We fit the model with those parameters and evaluated by getting
-predicted probabilities and converting to binary once again based off the probabilities being 
-greater than versus less than $0.5$. Furthermore, we created a confusion matrix and printed the
-accuracy score, recall, precision, and F1 score. The recall was incredibly high, around $0.99$,
-and the accuracy was $0.75$, which suggests the model performed fairly. 
