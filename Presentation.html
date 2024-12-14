@@ -429,7 +429,7 @@ Isabelle Perez &amp; Suha Akach
 <ul>
 <li class="fragment">Monitering water quality by different chemical presence over time.</li>
 <li class="fragment">Finding areas of concern for water quality in NYC.</li>
-<li class="fragment">Predicting future values and presence of different chemicals.</li>
+<li class="fragment">Finding predictors of water quality.</li>
 </ul>
 </div>
 </section>
@@ -440,7 +440,7 @@ Isabelle Perez &amp; Suha Akach
 <ul>
 <li class="fragment">“Drinking Water Quality Distribution Monitoring Data” provided by the Department of Environmental Protection (DEP) <span class="citation" data-cites="nycopendata2024">(<a href="#/references" role="doc-biblioref" onclick="">Data 2024</a>)</span>.</li>
 <li class="fragment">Data from: 09/01/2024 till 09/30/2024.</li>
-<li class="fragment">Tracked variables &amp; chemicals: Chlorine, Turbidity, Fluoride, Coliform, E.coli.</li>
+<li class="fragment">Tracked variables: Chlorine, Turbidity, Coliform, E.coli.</li>
 </ul>
 </div>
 </section>
@@ -461,7 +461,7 @@ Isabelle Perez &amp; Suha Akach
 <li>Strandized format of our sample time column.</li>
 <li>Fixed column data types.</li>
 </ul>
-<div id="8ffbd85e" class="cell" data-execution_count="3">
+<div id="6d943a9d" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a><span class="co"># ensure sample time column is clean</span></span>
 <span id="cb1-2"><a href=""></a>data.dropna(subset <span class="op">=</span> [<span class="st">'Sample Time'</span>], inplace <span class="op">=</span> <span class="va">True</span>)</span>
 <span id="cb1-3"><a href=""></a></span>
@@ -491,7 +491,7 @@ Isabelle Perez &amp; Suha Akach
 <li>This helps us track different chemical values depending on borough, median household income, median_home_value, etc.</li>
 </ul></li>
 </ul>
-<div id="c59049de" class="cell" data-execution_count="4">
+<div id="7467c92a" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href=""></a><span class="co"># read in data for sampling sites</span></span>
 <span id="cb2-2"><a href=""></a>sites <span class="op">=</span> pd.read_csv(<span class="st">'data/sampling_sites_extended.csv'</span>)</span>
 <span id="cb2-3"><a href=""></a></span>
@@ -522,25 +522,238 @@ Isabelle Perez &amp; Suha Akach
 <span id="cb2-28"><a href=""></a></span>
 <span id="cb2-29"><a href=""></a>data <span class="op">=</span> pd.merge(data, sites, on <span class="op">=</span> <span class="st">'sample_site'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<ul>
+<li>Created a ‘complaint’ target variable that indicates safe water quality based on national water quality thresholds.</li>
+</ul>
+<div id="c90010dc" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a><span class="kw">def</span> preprocess_data(df):</span>
+<span id="cb3-2"><a href=""></a>    df[<span class="st">'compliant'</span>] <span class="op">=</span> (</span>
+<span id="cb3-3"><a href=""></a>        (df[<span class="st">'chlorine'</span>] <span class="op">&gt;</span> <span class="fl">0.2</span>) <span class="op">&amp;</span> (df[<span class="st">'chlorine'</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>) <span class="op">&amp;</span> </span>
+<span id="cb3-4"><a href=""></a>        (df[<span class="st">'ecoli'</span>] <span class="op">&lt;=</span> <span class="dv">0</span>) <span class="op">&amp;</span> </span>
+<span id="cb3-5"><a href=""></a>        (df[<span class="st">'turbidity'</span>] <span class="op">&lt;</span> <span class="fl">0.3</span>) <span class="op">&amp;</span> </span>
+<span id="cb3-6"><a href=""></a>        (df[<span class="st">'coliform'</span>] <span class="op">&lt;</span> <span class="fl">2.67</span>)</span>
+<span id="cb3-7"><a href=""></a>    ).astype(<span class="bu">int</span>)</span>
+<span id="cb3-8"><a href=""></a>    <span class="cf">return</span> df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section></section>
 <section>
-<section id="visulization-analysis" class="title-slide slide level1 center">
-<h1>Visulization &amp; Analysis</h1>
+<section id="visualization-of-chemical-levels-by-the-least-and-most-densely-populated-boroughs" class="title-slide slide level1 center">
+<h1>Visualization of Chemical Levels by the Least and Most Densely Populated Boroughs</h1>
 
 </section>
-<section id="section-2" class="slide level2 scrollable incremental">
+<section id="section-2" class="slide level2 scrollable">
 <h2></h2>
-<h3 id="staten-island-vs-brooklyn-levels">Staten Island vs Brooklyn Levels</h3>
-<div id="fdbfdfac" class="cell" data-execution_count="5">
+<h3 id="staten-island-vs-manhattan-over-time">Staten Island vs Manhattan over time</h3>
+<div id="b301a703" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="Presentation_files/figure-revealjs/cell-5-output-1.png" width="1431" height="1430"></p>
+<p><img data-src="Presentation_files/figure-revealjs/cell-6-output-1.png" width="1431" height="1910"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>:::</p>
+</section></section>
+<section>
+<section id="finding-if-cetain-boroughs-predict-water-quality-w-logistic-regression." class="title-slide slide level1 center">
+<h1>Finding if Cetain Boroughs Predict Water Quality w/ Logistic Regression.</h1>
+
+</section>
+<section id="section-3" class="slide level2 scrollable">
+<h2></h2>
+<h3 id="function-to-preprocess-and-create-the-compliant-target-variable.">Function to preprocess and create the ‘compliant’ target variable.</h3>
+<div id="b0dc95b1" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href=""></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split, GridSearchCV, learning_curve</span>
+<span id="cb4-2"><a href=""></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> StandardScaler</span>
+<span id="cb4-3"><a href=""></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
+<span id="cb4-4"><a href=""></a><span class="im">from</span> imblearn.over_sampling <span class="im">import</span> SMOTE</span>
+<span id="cb4-5"><a href=""></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score, precision_score, recall_score, f1_score, confusion_matrix</span>
+<span id="cb4-6"><a href=""></a></span>
+<span id="cb4-7"><a href=""></a><span class="kw">def</span> preprocess_data(df):</span>
+<span id="cb4-8"><a href=""></a>    df[<span class="st">'compliant'</span>] <span class="op">=</span> (</span>
+<span id="cb4-9"><a href=""></a>        (df[<span class="st">'chlorine'</span>] <span class="op">&gt;</span> <span class="fl">0.2</span>) <span class="op">&amp;</span> (df[<span class="st">'chlorine'</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>) <span class="op">&amp;</span> </span>
+<span id="cb4-10"><a href=""></a>        (df[<span class="st">'ecoli'</span>] <span class="op">&lt;=</span> <span class="dv">0</span>) <span class="op">&amp;</span> </span>
+<span id="cb4-11"><a href=""></a>        (df[<span class="st">'turbidity'</span>] <span class="op">&lt;</span> <span class="fl">0.3</span>) <span class="op">&amp;</span> </span>
+<span id="cb4-12"><a href=""></a>        (df[<span class="st">'coliform'</span>] <span class="op">&lt;</span> <span class="fl">2.67</span>)</span>
+<span id="cb4-13"><a href=""></a>    ).astype(<span class="bu">int</span>)</span>
+<span id="cb4-14"><a href=""></a>    <span class="cf">return</span> df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="function-to-resample-the-data-using-smote" class="slide level2">
+<h2>Function to resample the data using SMOTE</h2>
+<ul>
+<li>This addresses the class imbalance by generating synthetic samples for the minority class (non-compliant), making the dataset more balanced.</li>
+</ul>
+<div id="9cad35a3" class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href=""></a><span class="kw">def</span> resample_data(X, y):</span>
+<span id="cb5-2"><a href=""></a>    smote <span class="op">=</span> SMOTE(random_state<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb5-3"><a href=""></a>    X_resampled, y_resampled <span class="op">=</span> smote.fit_resample(X, y)</span>
+<span id="cb5-4"><a href=""></a>    <span class="cf">return</span> X_resampled, y_resampled</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section></section>
+<section>
+<section id="hyperparameter-tuning-with-gridsearchcv" class="title-slide slide level1 center">
+<h1>Hyperparameter tuning with GridSearchCV</h1>
+
+</section>
+<section id="section-4" class="slide level2 scrollable">
+<h2></h2>
+<ul>
+<li><p><strong>Lasso Regularization (L1)</strong> shrinks some coefficients exactly to zero, effectively eliminating features. It works well for feature selection when only a subset of features are important.</p></li>
+<li><p><strong>Ridge Regularization (L2)</strong> shrinks coefficients towards zero but doesn’t eliminate them. It works well when all features are expected to contribute to the prediction.</p></li>
+</ul>
+<div id="0508acd1" class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href=""></a><span class="kw">def</span> grid_search_tuning(X_train, y_train):</span>
+<span id="cb6-2"><a href=""></a>    param_grid <span class="op">=</span> {</span>
+<span id="cb6-3"><a href=""></a>        <span class="st">'C'</span>: [<span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.1</span>, <span class="dv">1</span>, <span class="dv">10</span>], <span class="co"># regularization strength</span></span>
+<span id="cb6-4"><a href=""></a>        <span class="st">'penalty'</span>: [<span class="st">'elasticnet'</span>], <span class="co"># combination of both L1 (Lasso) and L2 (Ridge).</span></span>
+<span id="cb6-5"><a href=""></a>        <span class="st">'l1_ratio'</span>: [<span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span>],  <span class="co"># ratio between L1 and L2 (0 = L2, 1 = L1)</span></span>
+<span id="cb6-6"><a href=""></a>        <span class="st">'solver'</span>: [<span class="st">'saga'</span>]</span>
+<span id="cb6-7"><a href=""></a>    }</span>
+<span id="cb6-8"><a href=""></a></span>
+<span id="cb6-9"><a href=""></a>    logreg <span class="op">=</span> LogisticRegression(max_iter<span class="op">=</span><span class="dv">1000</span>)</span>
+<span id="cb6-10"><a href=""></a>    grid_search <span class="op">=</span> GridSearchCV(logreg, param_grid, cv<span class="op">=</span><span class="dv">5</span>, scoring<span class="op">=</span><span class="st">'f1'</span>, n_jobs<span class="op">=-</span><span class="dv">1</span>) <span class="co"># evaluation metric</span></span>
+<span id="cb6-11"><a href=""></a>    grid_search.fit(X_train, y_train)</span>
+<span id="cb6-12"><a href=""></a></span>
+<span id="cb6-13"><a href=""></a>    <span class="bu">print</span>(<span class="ss">f"Best parameters: </span><span class="sc">{</span>grid_search<span class="sc">.</span>best_params_<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb6-14"><a href=""></a>    <span class="bu">print</span>(<span class="ss">f"Best cross-validation score (F1): </span><span class="sc">{</span>grid_search<span class="sc">.</span>best_score_<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb6-15"><a href=""></a></span>
+<span id="cb6-16"><a href=""></a>    <span class="cf">return</span> grid_search.best_estimator_</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section></section>
+<section>
+<section id="function-to-train-and-evaluate-the-model-using-the-best-parameters-from-gridsearchcv" class="title-slide slide level1 center">
+<h1>Function to Train and Evaluate the Model Using the Best Parameters from GridSearchCV</h1>
+
+</section>
+<section id="section-5" class="slide level2 scrollable">
+<h2></h2>
+<ul>
+<li>A 0.3 threshold to find predictions with probabilities above 0.3 which will be classified as 1 (compliant), and below will be 0 (non-compliant).</li>
+<li>Standardized the features by removing the mean and scaling to unit variance. This is important for our model since it is sensitive to the scale of the features.</li>
+</ul>
+<div id="7094c30c" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href=""></a><span class="kw">def</span> train_and_evaluate_model(X_train, y_train, X_test, y_test, best_logreg, threshold<span class="op">=</span><span class="fl">0.3</span>):</span>
+<span id="cb7-2"><a href=""></a>    <span class="co"># standardize the features</span></span>
+<span id="cb7-3"><a href=""></a>    scaler <span class="op">=</span> StandardScaler()</span>
+<span id="cb7-4"><a href=""></a>    X_train_scaled <span class="op">=</span> scaler.fit_transform(X_train)</span>
+<span id="cb7-5"><a href=""></a>    X_test_scaled <span class="op">=</span> scaler.transform(X_test)</span>
+<span id="cb7-6"><a href=""></a></span>
+<span id="cb7-7"><a href=""></a>    <span class="co"># fit the model with the best parameters</span></span>
+<span id="cb7-8"><a href=""></a>    best_logreg.fit(X_train_scaled, y_train)</span>
+<span id="cb7-9"><a href=""></a></span>
+<span id="cb7-10"><a href=""></a>    <span class="co"># get predicted probabilities and adjust threshold</span></span>
+<span id="cb7-11"><a href=""></a>    y_pred_prob <span class="op">=</span> best_logreg.predict_proba(X_test_scaled)[:, <span class="dv">1</span>]</span>
+<span id="cb7-12"><a href=""></a>    y_pred_adjusted <span class="op">=</span> (y_pred_prob <span class="op">&gt;</span> threshold).astype(<span class="bu">int</span>)</span>
+<span id="cb7-13"><a href=""></a></span>
+<span id="cb7-14"><a href=""></a>    <span class="co"># evaluation metrics</span></span>
+<span id="cb7-15"><a href=""></a>    <span class="bu">print</span>(<span class="st">'Accuracy:'</span>, accuracy_score(y_test, y_pred_adjusted))</span>
+<span id="cb7-16"><a href=""></a>    <span class="bu">print</span>(<span class="st">'Precision:'</span>, precision_score(y_test, y_pred_adjusted))</span>
+<span id="cb7-17"><a href=""></a>    <span class="bu">print</span>(<span class="st">'Recall:'</span>, recall_score(y_test, y_pred_adjusted))</span>
+<span id="cb7-18"><a href=""></a>    <span class="bu">print</span>(<span class="st">'F1 Score:'</span>, f1_score(y_test, y_pred_adjusted))</span>
+<span id="cb7-19"><a href=""></a></span>
+<span id="cb7-20"><a href=""></a>    cm <span class="op">=</span> confusion_matrix(y_test, y_pred_adjusted)</span>
+<span id="cb7-21"><a href=""></a>    <span class="bu">print</span>(cm)</span>
+<span id="cb7-22"><a href=""></a></span>
+<span id="cb7-23"><a href=""></a>    <span class="cf">return</span> best_logreg</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<h3 id="cross-validation">Cross Validation</h3>
+<div id="d828e7c0" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href=""></a><span class="kw">def</span> plot_learning_curve(model, X_train, y_train):</span>
+<span id="cb8-2"><a href=""></a>    train_sizes, train_scores, test_scores <span class="op">=</span> learning_curve(</span>
+<span id="cb8-3"><a href=""></a>        model, X_train, y_train, cv<span class="op">=</span><span class="dv">5</span>, n_jobs<span class="op">=-</span><span class="dv">1</span>,</span>
+<span id="cb8-4"><a href=""></a>        train_sizes<span class="op">=</span>np.linspace(<span class="fl">0.1</span>, <span class="fl">1.0</span>, <span class="dv">10</span>), scoring<span class="op">=</span><span class="st">'f1'</span>)</span>
+<span id="cb8-5"><a href=""></a></span>
+<span id="cb8-6"><a href=""></a>    <span class="co"># calculate the mean and standard deviation for plotting</span></span>
+<span id="cb8-7"><a href=""></a>    train_mean <span class="op">=</span> train_scores.mean(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb8-8"><a href=""></a>    train_std <span class="op">=</span> train_scores.std(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb8-9"><a href=""></a>    test_mean <span class="op">=</span> test_scores.mean(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb8-10"><a href=""></a>    test_std <span class="op">=</span> test_scores.std(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb8-11"><a href=""></a></span>
+<span id="cb8-12"><a href=""></a>    plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
+<span id="cb8-13"><a href=""></a>    plt.plot(train_sizes, train_mean, color<span class="op">=</span><span class="st">'blue'</span>, label<span class="op">=</span><span class="st">'Training score'</span>)</span>
+<span id="cb8-14"><a href=""></a>    plt.plot(train_sizes, test_mean, color<span class="op">=</span><span class="st">'red'</span>, label<span class="op">=</span><span class="st">'Cross-validation score'</span>)</span>
+<span id="cb8-15"><a href=""></a>    plt.fill_between(train_sizes, train_mean <span class="op">-</span> train_std, train_mean <span class="op">+</span> train_std, alpha<span class="op">=</span><span class="fl">0.1</span>, color<span class="op">=</span><span class="st">'blue'</span>)</span>
+<span id="cb8-16"><a href=""></a>    plt.fill_between(train_sizes, test_mean <span class="op">-</span> test_std, test_mean <span class="op">+</span> test_std, alpha<span class="op">=</span><span class="fl">0.1</span>, color<span class="op">=</span><span class="st">'red'</span>)</span>
+<span id="cb8-17"><a href=""></a>    plt.title(<span class="st">"Learning Curve (Logistic Regression)"</span>)</span>
+<span id="cb8-18"><a href=""></a>    plt.xlabel(<span class="st">"Number of Training Samples"</span>)</span>
+<span id="cb8-19"><a href=""></a>    plt.ylabel(<span class="st">"F1 Score"</span>)</span>
+<span id="cb8-20"><a href=""></a>    plt.legend(loc<span class="op">=</span><span class="st">"best"</span>)</span>
+<span id="cb8-21"><a href=""></a>    plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section></section>
+<section>
+<section id="results-after-cross-validation" class="title-slide slide level1 center">
+<h1>Results After Cross Validation</h1>
+
+</section>
+<section id="section-6" class="slide level2 scrollable">
+<h2></h2>
+<div id="9761c3ec" class="cell" data-execution_count="13">
+<div class="cell-output cell-output-stdout">
+<pre><code>Best parameters: {'C': 0.001, 'l1_ratio': 0.9, 'penalty': 'elasticnet', 'solver': 'saga'}
+Best cross-validation score (F1): 0.8083701932163778
+Accuracy: 0.7491726038117287
+Precision: 0.6664340696482697
+Recall: 0.9971288743882545
+F1 Score: 0.7989125462363905
+[[15390 15297]
+ [   88 30562]]</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="Presentation_files/figure-revealjs/cell-13-output-2.png" width="829" height="523"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                    Feature  Coefficient  Absolute Coefficient
+0                  chlorine     1.036188              1.036188
+1                 turbidity    -1.017121              1.017121
+12        borough_Manhattan    -0.132909              0.132909
+11         borough_Brooklyn     0.095151              0.095151
+8         median_home_value    -0.076006              0.076006
+9   median_household_income    -0.073845              0.073845
+5                  latitude    -0.037569              0.037569
+4                 longitude    -0.032017              0.032017
+2                  coliform    -0.026138              0.026138
+7    occupied_housing_units     0.014456              0.014456
+3                     ecoli     0.000000              0.000000
+6             housing_units     0.000000              0.000000
+10            borough_Bronx     0.000000              0.000000
+13           borough_Queens     0.000000              0.000000
+14    borough_Staten Island     0.000000              0.000000</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="Presentation_files/figure-revealjs/cell-13-output-4.png" width="953" height="523"></p>
 </figure>
 </div>
 </div>
 </div>
 </section></section>
+<section>
+<section id="analysis-conclusion" class="title-slide slide level1 center">
+<h1>Analysis &amp; Conclusion</h1>
+
+</section>
+<section id="section-7" class="slide level2 scrollable incremental">
+<h2></h2>
+<ul>
+<li>The model has a accuracy of 75% and very high recall (99.7%), meaning it is excellent at detecting compliance. However, this comes at the cost of a lower precision (66.6%), which means the model over-predicts compliance, classifying too many non-compliant instances as compliant.</li>
+<li>The F1 score is good (80.8%), reflecting a balance between precision and recall.</li>
+<li>The model’s performance metrics indicate it is particularly good at identifying the positive class (compliant), but it could be improved in reducing false positives.</li>
+<li>Feature importance indicates that boroughs along with household income, value and occupied units do have a positive indication of water compliance even though they aren’t strong.</li>
+</ul>
+</section></section>
+<section id="thank-you" class="title-slide slide level1 center">
+<h1>Thank You!</h1>
+
+</section>
+
 <section id="references" class="title-slide slide level1 smaller scrollable">
 <h1>References</h1>
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
