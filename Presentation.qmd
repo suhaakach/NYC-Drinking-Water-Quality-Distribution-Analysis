@@ -25,7 +25,7 @@ bibliography: ref.bib
 # Data Collection
 ::: {.incremental}
 - “Drinking Water Quality Distribution Monitoring Data” provided by the Department of Environmental Protection (DEP) [@nycopendata2024]. 
-- Data from: 09/01/2024 till 09/30/2024.
+- Data from: 01/01/2015 till 09/30/2024.
 - Tracked variables: Chlorine, Turbidity, Coliform, E.coli.
 :::
 
